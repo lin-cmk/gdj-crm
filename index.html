@@ -596,6 +596,114 @@
       </div>
     </div>
 
+    
+    <!-- ============ ABA: DASHBOARD EXECUTIVO ============ -->
+    <div id="tabDashboard" class="tab-content">
+            <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="font-serif text-2xl font-bold text-slate-900">Dashboard Executivo</h2>
+          <p class="text-xs text-slate-400" id="dashboardGeradoEm">--</p>
+        </div>
+        <button onclick="carregarDashboard(true)" class="btn-outline text-xs !py-1.5">
+          <i class="fas fa-sync-alt"></i> Atualizar
+        </button>
+      </div>
+
+      <!-- KPIs EXECUTIVOS -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+        <div class="card-premium p-4 border-l-4 border-emerald-400">
+          <p class="stat-label"><i class="fas fa-coins text-emerald-500 mr-1"></i>Receita Total</p>
+          <p class="text-xl font-extrabold text-emerald-600" id="dashReceitaTotal">R$ 0</p>
+          <p class="text-[0.65rem] text-slate-400 mt-1" id="dashClientesInfo">--</p>
+        </div>
+        <div class="card-premium p-4 border-l-4 border-blue-400">
+          <p class="stat-label"><i class="fas fa-receipt text-blue-500 mr-1"></i>Ticket Médio</p>
+          <p class="text-xl font-extrabold text-blue-600" id="dashTicketMedio">R$ 0</p>
+          <p class="text-[0.65rem] text-slate-400 mt-1">por cliente</p>
+        </div>
+        <div class="card-premium p-4 border-l-4 border-purple-400">
+          <p class="stat-label"><i class="fas fa-bullseye text-purple-500 mr-1"></i>Conversão</p>
+          <p class="text-xl font-extrabold text-purple-600" id="dashTaxaConversao">0%</p>
+          <p class="text-[0.65rem] text-slate-400 mt-1" id="dashConversaoInfo">--</p>
+        </div>
+        <div class="card-premium p-4 border-l-4 border-amber-400">
+          <p class="stat-label"><i class="fas fa-briefcase text-amber-500 mr-1"></i>Vagas Fechadas</p>
+          <p class="text-xl font-extrabold text-amber-600" id="dashVagasFechadas">0</p>
+          <p class="text-[0.65rem] text-slate-400 mt-1" id="dashVagasInfo">--</p>
+        </div>
+        <div class="card-premium p-4 border-l-4 border-orange-400">
+          <p class="stat-label"><i class="fas fa-fire text-orange-500 mr-1"></i>Leads Ativos</p>
+          <p class="text-xl font-extrabold text-orange-600" id="dashLeadsAtivos">0</p>
+          <p class="text-[0.65rem] text-slate-400 mt-1">em negociação</p>
+        </div>
+        <div class="card-premium p-4 border-l-4 border-red-400">
+          <p class="stat-label"><i class="fas fa-bell text-red-500 mr-1"></i>Alertas</p>
+          <p class="text-xl font-extrabold text-red-600" id="dashAlertas">0</p>
+          <p class="text-[0.65rem] text-slate-400 mt-1">precisam de atenção</p>
+        </div>
+      </div>
+
+      <!-- GRÁFICOS -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="card-premium p-5 lg:col-span-2">
+          <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+            <i class="fas fa-chart-bar text-amber-500 mr-2"></i>Receitas × Despesas (6 meses)
+          </h3>
+          <div style="position: relative; height: 280px;">
+            <canvas id="chartBarras"></canvas>
+          </div>
+        </div>
+        <div class="card-premium p-5">
+          <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+            <i class="fas fa-chart-pie text-emerald-500 mr-2"></i>Funil de Leads
+          </h3>
+          <div style="position: relative; height: 280px;">
+            <canvas id="chartPizza"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDGETS PRINCIPAIS -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div class="card-premium p-5">
+          <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+            <i class="fas fa-trophy text-amber-500 mr-2"></i>Top 5 Empresas
+          </h3>
+          <div id="dashTopEmpresas" class="space-y-2"></div>
+        </div>
+        <div class="card-premium p-5">
+          <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+            <i class="fas fa-handshake text-orange-500 mr-2"></i>Próximas Reuniões
+          </h3>
+          <div id="dashProximasReunioes" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div class="card-premium p-5">
+          <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+            <i class="fas fa-fire text-red-500 mr-2"></i>Leads Mais Quentes
+          </h3>
+          <div id="dashLeadsQuentes" class="space-y-2"></div>
+        </div>
+        <div class="card-premium p-5">
+          <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+            <i class="fas fa-triangle-exclamation text-red-500 mr-2"></i>Precisa de Atenção
+          </h3>
+          <div id="dashAlertasLista" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- CANDIDATOS POR ETAPA -->
+      <div class="card-premium p-5">
+        <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+          <i class="fas fa-users text-blue-500 mr-2"></i>Candidatos no Processo
+        </h3>
+        <div id="dashCandidatosEtapa" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2"></div>
+      </div>
+    </div>
+
+
     <div class="text-center text-slate-300 text-[0.6rem] mt-6 tracking-wider">
       GDJ VERTEX © 2026 • CRM & Painel de Gestão • v7.0
     </div>
