@@ -288,7 +288,7 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <a href="https://gdj-apresentacao.netlify.app" target="_blank" class="btn-gold !py-1.5 !px-3 text-xs hidden md:inline-flex" title="Abrir Apresentação">
+          <a href="https://lin-cmk.github.io/gdj-crm/apresentacao/" target="_blank" class="btn-gold !py-1.5 !px-3 text-xs hidden md:inline-flex" title="Abrir Apresentação">
             <i class="fas fa-presentation"></i> Apresentação
           </a>
           <span class="text-xs text-slate-400 hidden lg:block" id="ultimaAtualizacao">--</span>
@@ -712,6 +712,30 @@
     </div>
   </div>
 
+  <!-- ================= MODAL: REUNIÃO ================= -->
+  <div id="modalReuniao" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif">
+          <i class="fas fa-handshake text-orange-500 mr-2"></i>Agendar Reunião
+        </h3>
+        <button onclick="fecharModal('modalReuniao')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <p class="text-sm text-slate-500 mb-4">Lead: <strong id="reuniaoLeadNome">--</strong></p>
+
+      <label class="text-xs text-slate-500 mb-1 block">Título / Objetivo</label>
+      <input type="text" id="reuniaoTitulo" class="input-field mb-3" placeholder="Ex: Reunião para fechar negócio" />
+
+      <label class="text-xs text-slate-500 mb-1 block">Data e hora</label>
+      <input type="datetime-local" id="reuniaoData" class="input-field mb-3" />
+
+      <div class="flex gap-3 mt-4">
+        <button onclick="salvarReuniao()" id="btnSalvarReuniao" class="btn-primary flex-1">Salvar Reunião</button>
+        <button onclick="excluirReuniao()" class="btn-outline flex-1 text-red-500 border-red-200">Excluir</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= MODAL: NOVO CANDIDATO ================= -->
   <div id="modalNovoCandidato" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
@@ -725,6 +749,13 @@
         <input type="text" id="candidatoTelefone" class="input-field" placeholder="Telefone (com DDD)" />
         <input type="email" id="candidatoEmail" class="input-field" placeholder="E-mail" />
         <input type="text" id="candidatoCargoDesejado" class="input-field" placeholder="Cargo pretendido" />
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <label class="text-xs font-semibold text-amber-700 mb-1 block">
+            <i class="fas fa-calendar-check mr-1"></i> Agendar entrevista (opcional)
+          </label>
+          <input type="datetime-local" id="candidatoDataEntrevista" class="input-field mb-2" />
+          <input type="text" id="candidatoEntrevistador" class="input-field" placeholder="Entrevistador responsável" />
+        </div>
       </div>
       <div class="flex gap-3 mt-5">
         <button onclick="salvarCandidato()" id="btnSalvarCandidato" class="btn-primary flex-1">Salvar</button>
@@ -899,12 +930,26 @@
     // ============================================================
     // CARREGAR CRM
     // ============================================================
-    async function carregarDados() {
+    async function carregarDados(mostrarLoading = true) {
       const loading = document.getElementById('loading');
-      loading.classList.add('active');
+      if (mostrarLoading) loading.classList.add('active');
       try {
         const response = await fetch(CONFIG.API_URL + '?action=dados_crm');
-        const data = await response.json();
+        const texto = await response.text();
+
+        if (texto.trim().startsWith('<!DOCTYPE') || texto.trim().startsWith('<html')) {
+          console.error('❌ Backend retornou HTML em vez de JSON');
+          loading.classList.remove('active');
+          document.getElementById('tabelaLeads').innerHTML = `
+            <tr><td colspan="8" class="text-center text-red-500 py-8">
+              <i class="fas fa-exclamation-triangle text-2xl block mb-2"></i>
+              <strong>Painel não consegue conectar ao backend</strong><br>
+              <small>Verifique se o Apps Script está implantado corretamente</small>
+            </td></tr>`;
+          return;
+        }
+
+        const data = JSON.parse(texto);
         if (!data.sucesso) { loading.classList.remove('active'); return; }
 
         if (data.statusValidos?.length) statusValidos = data.statusValidos;
@@ -918,10 +963,12 @@
         atualizarGraficos(data);
         atualizarTabela(leadsData);
         atualizarTimestamp();
+
+        if (document.getElementById('tabFunil').classList.contains('active')) {
+          renderKanbanFunil();
+        }
       } catch (error) {
-        console.error('Erro:', error);
-        document.getElementById('tabelaLeads').innerHTML =
-          `<tr><td colspan="8" class="text-center text-slate-400 py-8">Erro ao carregar. Verifique conexão.</td></tr>`;
+        console.error('Erro ao carregar:', error);
       }
       loading.classList.remove('active');
     }
@@ -1075,33 +1122,63 @@
 
     function renderFunnelCard(lead, st) {
       const dias = lead.dias ?? 0;
-      let temp = 'frio', icon = '❄️', label = 'Frio';
-      if (dias <= 3) { temp = 'quente'; icon = '🔥'; label = 'Quente'; }
-      else if (dias <= 7) { temp = 'morno'; icon = '🌤️'; label = 'Morno'; }
+      let temp = 'frio', icon = '❄️', label = 'Frio', tempClass = 'temp-frio';
+      if (dias <= 3) { temp = 'quente'; icon = '🔥'; label = 'Quente'; tempClass = 'temp-quente'; }
+      else if (dias <= 7) { temp = 'morno'; icon = '🌤️'; label = 'Morno'; tempClass = 'temp-morno'; }
 
       const valor = Number(lead.valor_estimado) || 0;
-      const notas = lead.notas ? lead.notas.substring(0, 50) : '';
+      const notas = lead.notas ? lead.notas.substring(0, 60) : '';
+      const inicial = (lead.nome || '?').charAt(0).toUpperCase();
+      const coresAvatar = ['#C9A227', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b'];
+      const corAvatar = coresAvatar[(lead.nome || '?').charCodeAt(0) % coresAvatar.length];
+
+      const temReuniao = lead.data_reuniao && new Date(lead.data_reuniao) > new Date();
+      const reuniaoTexto = temReuniao ? `${escapeHtml(lead.titulo_reuniao || 'Reunião')} · ${new Date(lead.data_reuniao).toLocaleString('pt-BR', {dateStyle:'short', timeStyle:'short'})}` : '';
 
       return `<div class="funnel-card sortable-item" data-id="${lead.id}" style="border-left-color:${KANBAN_BORDERS[st]}">
-        <div class="flex items-start justify-between gap-2 mb-1">
-          <div class="font-semibold text-slate-900 text-sm truncate">${escapeHtml(lead.nome) || 'Anônimo'}</div>
-          <span class="temp-badge temp-${temp}">${icon} ${label}</span>
+        <div class="flex items-start gap-2 mb-2">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style="background:${corAvatar}">${inicial}</div>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-slate-900 text-sm truncate" title="${escapeHtml(lead.nome)}">${escapeHtml(lead.nome) || 'Anônimo'}</div>
+            ${lead.empresa ? `<div class="text-[0.7rem] text-slate-500 truncate"><i class="fas fa-building mr-1"></i>${escapeHtml(lead.empresa)}</div>` : ''}
+          </div>
+          <span class="temp-badge ${tempClass} flex-shrink-0">${icon}</span>
         </div>
-        ${lead.empresa ? `<div class="text-xs text-slate-600 truncate"><i class="fas fa-building mr-1"></i>${escapeHtml(lead.empresa)}</div>` : ''}
-        ${lead.interesse ? `<div class="text-xs text-slate-500 truncate"><i class="fas fa-tag mr-1"></i>${escapeHtml(lead.interesse)}</div>` : ''}
-        ${valor > 0 ? `<div class="text-xs text-emerald-600 font-bold mt-1">💵 R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>` : ''}
-        ${notas ? `<div class="text-[0.65rem] text-amber-700 mt-1 italic truncate" title="${escapeHtml(lead.notas)}">📝 ${escapeHtml(notas)}${lead.notas.length > 50 ? '...' : ''}</div>` : ''}
+
+        <div class="flex flex-wrap gap-1 mb-2">
+          ${lead.interesse ? `<span class="text-[0.65rem] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-semibold"><i class="fas fa-tag mr-0.5"></i>${escapeHtml(lead.interesse)}</span>` : ''}
+          ${lead.origem ? `<span class="text-[0.65rem] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full"><i class="fas fa-globe mr-0.5"></i>${escapeHtml(lead.origem)}</span>` : ''}
+        </div>
+
+        <div class="flex gap-2 mb-2">
+          ${lead.telefone ? `<a href="https://wa.me/55${String(lead.telefone).replace(/\D/g,'').replace(/^55/, '')}" target="_blank" onclick="event.stopPropagation()" class="flex-1 text-[0.65rem] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 py-1 rounded text-center font-semibold"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
+          ${lead.email ? `<a href="mailto:${escapeHtml(lead.email)}" onclick="event.stopPropagation()" class="flex-1 text-[0.65rem] bg-blue-50 text-blue-700 hover:bg-blue-100 py-1 rounded text-center font-semibold"><i class="fas fa-envelope"></i> Email</a>` : ''}
+        </div>
+
+        ${valor > 0 ? `<div class="bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1 mb-2 flex items-center justify-between">
+          <span class="text-[0.65rem] text-emerald-700 font-semibold"><i class="fas fa-coins mr-1"></i>Valor estimado</span>
+          <span class="text-xs font-extrabold text-emerald-700">R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+        </div>` : ''}
+
+        ${temReuniao ? `<div class="bg-orange-50 border border-orange-200 rounded-lg px-2 py-1 mb-2">
+          <div class="text-[0.65rem] text-orange-700 font-semibold"><i class="fas fa-handshake mr-1"></i>${escapeHtml(lead.titulo_reuniao || 'Reunião agendada')}</div>
+          <div class="text-[0.6rem] text-orange-600">${new Date(lead.data_reuniao).toLocaleString('pt-BR', {dateStyle:'short', timeStyle:'short'})}</div>
+        </div>` : ''}
+
+        ${notas ? `<div class="bg-amber-50 border border-amber-100 rounded px-2 py-1 mb-2">
+          <div class="text-[0.6rem] text-amber-800 italic line-clamp-2" title="${escapeHtml(lead.notas)}"><i class="fas fa-sticky-note mr-0.5"></i>${escapeHtml(notas)}${lead.notas.length > 60 ? '...' : ''}</div>
+        </div>` : ''}
+
         <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
-          <span class="text-[0.65rem] text-slate-400">${escapeHtml(lead.origem) || ''}</span>
-          <span class="text-[0.65rem] text-slate-400"><i class="fas fa-clock mr-0.5"></i>${dias}d</span>
-        </div>
-        <div class="flex gap-1 mt-2">
-          <button onclick="event.stopPropagation(); abrirModalStatus('${lead.id}')" class="flex-1 text-[0.65rem] bg-slate-100 hover:bg-slate-200 py-1 rounded font-semibold">
-            <i class="fas fa-pen"></i> Editar
-          </button>
-          <button onclick="event.stopPropagation(); abrirChat('${lead.id}')" class="flex-1 text-[0.65rem] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 py-1 rounded font-semibold">
-            <i class="fab fa-whatsapp"></i> Chat
-          </button>
+          <span class="text-[0.65rem] text-slate-400"><i class="fas fa-clock mr-0.5"></i>${dias}d na etapa</span>
+          <div class="flex gap-1">
+            <button onclick="event.stopPropagation(); abrirModalStatus('${lead.id}')" class="text-[0.65rem] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-semibold" title="Editar lead">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button onclick="event.stopPropagation(); abrirModalReuniao('${lead.id}')" class="text-[0.65rem] bg-orange-100 text-orange-700 hover:bg-orange-200 px-2 py-1 rounded font-semibold" title="Agendar reunião">
+              <i class="fas fa-handshake"></i>
+            </button>
+          </div>
         </div>
       </div>`;
     }
@@ -1141,13 +1218,13 @@
         });
         const data = await resp.json();
         if (!data.sucesso) {
-          alert('Erro: ' + (data.erro || 'desconhecido'));
+          mostrarToast('Erro: ' + (data.erro || 'desconhecido'), 'erro');
           carregarDados();
         } else {
           await carregarDados();
         }
       } catch (e) {
-        alert('Erro de conexão: ' + e.message);
+        mostrarToast('Erro de conexão: ' + e.message, 'erro');
         carregarDados();
       }
     }
@@ -1199,7 +1276,7 @@
         await carregarDados();
         if (document.getElementById('tabFunil').classList.contains('active')) renderKanbanFunil();
       } catch (e) {
-        alert('Erro: ' + e.message);
+        mostrarToast('Erro: ' + e.message, 'erro');
       }
 
       btn.disabled = false;
@@ -1222,7 +1299,7 @@
       const interesse = document.getElementById('novoInteresse').value.trim();
       const valor_estimado = parseFloat(document.getElementById('novoValorEstimado').value) || 0;
       const status = document.getElementById('novoStatus').value;
-      if (!nome) { alert('Nome é obrigatório!'); return; }
+      if (!nome) { mostrarToast('Nome é obrigatório!', 'aviso'); return; }
 
       const btn = document.getElementById('btnSalvarLead');
       btn.disabled = true; btn.textContent = 'Salvando...';
@@ -1235,14 +1312,15 @@
             valor_estimado, origem: 'Manual', status, usuario: 'CRM Web' })
         });
         const data = await resp.json();
-        if (!data.sucesso) { alert('Erro: ' + data.erro); }
+        if (!data.sucesso) { mostrarToast('Erro: ' + data.erro, 'erro'); }
         else {
+          mostrarToast('✅ Lead cadastrado!', 'sucesso');
           fecharModal('modalNovoLead');
           ['novoNome','novoEmail','novoTelefone','novoEmpresa','novoInteresse','novoValorEstimado']
             .forEach(id => document.getElementById(id).value = '');
           carregarDados();
         }
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
       btn.disabled = false; btn.textContent = 'Salvar';
     }
 
@@ -1254,9 +1332,9 @@
           body: JSON.stringify({ action: 'excluir_lead', id, usuario: 'CRM Web' })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
         else carregarDados();
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
     }
 
     // ============================================================
@@ -1305,7 +1383,7 @@
       const mensagem = input.value.trim();
       if (!mensagem || !leadIdChatAtivo) return;
       const lead = leadsData.find(l => l.id === leadIdChatAtivo);
-      if (!lead?.telefone) { alert('Lead sem telefone.'); return; }
+      if (!lead?.telefone) { mostrarToast('Lead sem telefone.', 'aviso'); return; }
 
       const btn = document.getElementById('btnEnviarChat');
       btn.disabled = true; input.value = '';
@@ -1316,9 +1394,9 @@
           body: JSON.stringify({ action: 'enviar_whatsapp', telefone: lead.telefone, mensagem, usuario: 'CRM Web' })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
         else await carregarConversas(leadIdChatAtivo);
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
       btn.disabled = false;
     }
 
@@ -1404,7 +1482,7 @@
       const responsavel = document.getElementById('vagaResponsavel').value.trim();
       const qtd_vagas = document.getElementById('vagaQtdVagas').value || 1;
       const descricao = document.getElementById('vagaDescricao').value.trim();
-      if (!titulo) { alert('Informe o título.'); return; }
+      if (!titulo) { mostrarToast('Informe o título.', 'aviso'); return; }
 
       const btn = document.getElementById('btnSalvarVaga');
       btn.disabled = true; btn.textContent = 'Salvando...';
@@ -1414,14 +1492,15 @@
           body: JSON.stringify({ action: 'criar_vaga', titulo, empresa, responsavel, qtd_vagas, descricao, status: 'aberta' })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
         else {
+          mostrarToast('✅ Vaga criada!', 'sucesso');
           fecharModal('modalNovaVaga');
           ['vagaTitulo','vagaEmpresa','vagaResponsavel','vagaDescricao'].forEach(id => document.getElementById(id).value = '');
           document.getElementById('vagaQtdVagas').value = 1;
           carregarVagas();
         }
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
       btn.disabled = false; btn.textContent = 'Salvar';
     }
 
@@ -1439,15 +1518,36 @@
       const status = document.getElementById('selectStatusVaga').value;
       const btn = document.getElementById('btnSalvarStatusVaga');
       btn.disabled = true; btn.textContent = 'Salvando...';
+
       try {
         const resp = await fetch(CONFIG.API_URL, {
           method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
           body: JSON.stringify({ action: 'atualizar_vaga', id: vagaIdEmEdicao, status })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
-        else { fecharModal('modalStatusVaga'); carregarVagas(); }
-      } catch (e) { alert('Erro: ' + e.message); }
+        if (!data.sucesso) {
+          mostrarToast('Erro: ' + data.erro, 'erro');
+        } else {
+          mostrarToast('✅ Vaga atualizada!', 'sucesso');
+          fecharModal('modalStatusVaga');
+          carregarVagas();
+
+          if (data.gerouCobranca) {
+            setTimeout(async () => {
+              mostrarToast('💰 Cobrança criada! Ajuste o valor.', 'info');
+              mudarAba('financeiro');
+              await carregarFinanceiro();
+
+              const novoLanc = financeiroData.find(f => 
+                f.categoria === 'vaga_fechada' && 
+                f.valor === 0 && 
+                f.status === 'pendente'
+              );
+              if (novoLanc) abrirEdicaoLancamento(novoLanc.id);
+            }, 800);
+          }
+        }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
       btn.disabled = false; btn.textContent = 'Salvar';
     }
 
@@ -1460,9 +1560,9 @@
           body: JSON.stringify({ action: 'excluir_vaga', id: vagaIdEmEdicao })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
-        else { fecharModal('modalStatusVaga'); carregarVagas(); }
-      } catch (e) { alert('Erro: ' + e.message); }
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
+        else { mostrarToast('🗑️ Vaga excluída', 'info'); fecharModal('modalStatusVaga'); carregarVagas(); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
     }
 
     // ============================================================
@@ -1500,6 +1600,69 @@
       }).join('');
     }
 
+    function abrirModalReuniao(id) {
+      const lead = leadsData.find(l => l.id === id);
+      if (!lead) return;
+      leadIdEmEdicao = id;
+      document.getElementById('reuniaoLeadNome').textContent = lead.nome || '--';
+      document.getElementById('reuniaoTitulo').value = lead.titulo_reuniao || '';
+      document.getElementById('reuniaoData').value = lead.data_reuniao ? lead.data_reuniao.slice(0, 16) : '';
+      toggleModal('modalReuniao', true);
+    }
+
+    async function salvarReuniao() {
+      if (!leadIdEmEdicao) return;
+      const data_reuniao = document.getElementById('reuniaoData').value;
+      const titulo_reuniao = document.getElementById('reuniaoTitulo').value.trim();
+
+      if (!data_reuniao) { mostrarToast('Informe a data da reunião', 'aviso'); return; }
+
+      const btn = document.getElementById('btnSalvarReuniao');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({
+            action: 'salvar_reuniao',
+            id: leadIdEmEdicao,
+            data_reuniao,
+            titulo_reuniao,
+            usuario: 'CRM Web'
+          })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) {
+          mostrarToast('Erro: ' + data.erro, 'erro');
+        } else {
+          mostrarToast('✅ Reunião agendada!', 'sucesso');
+          fecharModal('modalReuniao');
+          carregarDados();
+        }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
+
+      btn.disabled = false; btn.textContent = 'Salvar Reunião';
+    }
+
+    async function excluirReuniao() {
+      if (!leadIdEmEdicao) return;
+      if (!confirm('Excluir esta reunião?')) return;
+
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'excluir_reuniao', id: leadIdEmEdicao, usuario: 'CRM Web' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
+        else {
+          mostrarToast('🗑️ Reunião excluída', 'info');
+          fecharModal('modalReuniao');
+          carregarDados();
+        }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
+    }
+
     function abrirNovoCandidato() { toggleModal('modalNovoCandidato', true); }
 
     async function salvarCandidato() {
@@ -1508,23 +1671,32 @@
       const telefone = document.getElementById('candidatoTelefone').value.trim();
       const email = document.getElementById('candidatoEmail').value.trim();
       const cargo_desejado = document.getElementById('candidatoCargoDesejado').value.trim();
-      if (!nome || !vaga_id) { alert('Selecione vaga e informe nome.'); return; }
+      const data_entrevista = document.getElementById('candidatoDataEntrevista').value;
+      const entrevistador = document.getElementById('candidatoEntrevistador').value.trim();
+
+      if (!nome || !vaga_id) { mostrarToast('Selecione vaga e informe nome', 'aviso'); return; }
 
       const btn = document.getElementById('btnSalvarCandidato');
       btn.disabled = true; btn.textContent = 'Salvando...';
       try {
         const resp = await fetch(CONFIG.API_URL, {
           method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
-          body: JSON.stringify({ action: 'criar_candidato', vaga_id, nome, telefone, email, cargo_desejado, etapa: 'inscrito' })
+          body: JSON.stringify({ 
+            action: 'criar_candidato', 
+            vaga_id, nome, telefone, email, cargo_desejado, 
+            data_entrevista, entrevistador,
+            etapa: data_entrevista ? 'entrevista_agendada' : 'inscrito' 
+          })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
         else {
+          mostrarToast('✅ Candidato cadastrado!', 'sucesso');
           fecharModal('modalNovoCandidato');
-          ['candidatoNome','candidatoTelefone','candidatoEmail','candidatoCargoDesejado'].forEach(id => document.getElementById(id).value = '');
+          ['candidatoNome','candidatoTelefone','candidatoEmail','candidatoCargoDesejado','candidatoDataEntrevista','candidatoEntrevistador'].forEach(id => document.getElementById(id).value = '');
           carregarCandidatos();
         }
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
       btn.disabled = false; btn.textContent = 'Salvar';
     }
 
@@ -1555,11 +1727,11 @@
           body: JSON.stringify({ action: 'atualizar_candidato', id: candidatoIdEmEdicao, etapa, data_entrevista, entrevistador, observacoes })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
         else {
+          mostrarToast('✅ Candidato atualizado!', 'sucesso');
           fecharModal('modalEtapaCandidato');
           carregarCandidatos();
-          // Se contratou → oferece gerar cobrança
           if (etapa === 'contratado') {
             const cand = candidatosData.find(x => x.id === candidatoIdEmEdicao);
             if (cand && confirm('🎉 Candidato CONTRATADO! Deseja gerar uma cobrança no Financeiro?')) {
@@ -1567,7 +1739,7 @@
             }
           }
         }
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
       btn.disabled = false; btn.textContent = 'Salvar';
     }
 
@@ -1578,13 +1750,13 @@
           body: JSON.stringify({ action: 'gerar_cobranca_vaga', vaga_id, candidato_id, usuario: 'CRM Web' })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
         else {
-          alert('✅ Cobrança gerada! Ajuste valor e data na aba Financeiro.');
+          mostrarToast('✅ Cobrança gerada! Ajuste valor e data na aba Financeiro.', 'sucesso');
           mudarAba('financeiro');
           carregarFinanceiro();
         }
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
     }
 
     async function excluirCandidato() {
@@ -1596,9 +1768,9 @@
           body: JSON.stringify({ action: 'excluir_candidato', id: candidatoIdEmEdicao })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
-        else { fecharModal('modalEtapaCandidato'); carregarCandidatos(); }
-      } catch (e) { alert('Erro: ' + e.message); }
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
+        else { mostrarToast('🗑️ Candidato excluído', 'info'); fecharModal('modalEtapaCandidato'); carregarCandidatos(); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
     }
 
     // ============================================================
@@ -1705,7 +1877,7 @@
       const empresa = document.getElementById('lancEmpresa').value.trim();
       const observacoes = document.getElementById('lancObs').value.trim();
 
-      if (!valor) { alert('Informe o valor.'); return; }
+      if (!valor) { mostrarToast('Informe o valor.', 'aviso'); return; }
 
       const btn = document.getElementById('btnSalvarLanc');
       btn.disabled = true; btn.textContent = 'Salvando...';
@@ -1716,14 +1888,15 @@
             data_prevista, empresa, observacoes, status: 'pendente', usuario: 'CRM Web' })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
         else {
+          mostrarToast('✅ Lançamento salvo!', 'sucesso');
           fecharModal('modalNovoLancamento');
           ['lancDescricao','lancValor','lancEmpresa','lancObs'].forEach(id => document.getElementById(id).value = '');
           carregarFinanceiro();
-          carregarDados(); // atualiza KPIs
+          carregarDados();
         }
-      } catch (e) { alert('Erro: ' + e.message); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
       btn.disabled = false; btn.textContent = 'Salvar';
     }
 
@@ -1757,9 +1930,9 @@
             descricao, valor, data_prevista, data_real, status, observacoes })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
-        else { fecharModal('modalEditarLancamento'); carregarFinanceiro(); carregarDados(); }
-      } catch (e) { alert('Erro: ' + e.message); }
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
+        else { mostrarToast('✅ Lançamento atualizado!', 'sucesso'); fecharModal('modalEditarLancamento'); carregarFinanceiro(); carregarDados(); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
       btn.disabled = false; btn.textContent = 'Salvar';
     }
 
@@ -1771,9 +1944,9 @@
           body: JSON.stringify({ action: acao, id, data_real: dataReal, usuario: 'CRM Web' })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
-        else { carregarFinanceiro(); carregarDados(); }
-      } catch (e) { alert('Erro: ' + e.message); }
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
+        else { mostrarToast('✅ Atualizado!', 'sucesso'); carregarFinanceiro(); carregarDados(); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
     }
 
     async function excluirLancamento() {
@@ -1785,9 +1958,9 @@
           body: JSON.stringify({ action: 'excluir_lancamento', id: lancamentoIdEmEdicao })
         });
         const data = await resp.json();
-        if (!data.sucesso) alert('Erro: ' + data.erro);
-        else { fecharModal('modalEditarLancamento'); carregarFinanceiro(); carregarDados(); }
-      } catch (e) { alert('Erro: ' + e.message); }
+        if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
+        else { mostrarToast('🗑️ Lançamento excluído', 'info'); fecharModal('modalEditarLancamento'); carregarFinanceiro(); carregarDados(); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
     }
 
     // ============================================================
@@ -1849,7 +2022,7 @@
     // EXPORTAR CSV
     // ============================================================
     function exportarCSV() {
-      if (!leadsData?.length) { alert('Nenhum lead para exportar.'); return; }
+      if (!leadsData?.length) { mostrarToast('Nenhum lead para exportar.', 'aviso'); return; }
       const headers = ['Nome','Email','Telefone','Empresa','Interesse','Origem','Status','Valor Estimado','Notas','Dias'];
       const rows = leadsData.map(l => [
         l.nome||'', l.email||'', l.telefone||'', l.empresa||'',
@@ -1885,6 +2058,27 @@
     }
     function fecharModal(id) { toggleModal(id, false); }
 
+    function mostrarToast(mensagem, tipo = 'sucesso') {
+      const cores = {
+        sucesso: 'bg-emerald-500',
+        erro: 'bg-red-500',
+        info: 'bg-blue-500',
+        aviso: 'bg-amber-500'
+      };
+      const icones = {
+        sucesso: 'fa-check-circle',
+        erro: 'fa-exclamation-circle',
+        info: 'fa-info-circle',
+        aviso: 'fa-exclamation-triangle'
+      };
+      const toast = document.createElement('div');
+      toast.className = `${cores[tipo]} text-white px-5 py-3 rounded-lg shadow-2xl flex items-center gap-3 fade-in`;
+      toast.innerHTML = `<i class="fas ${icones[tipo]}"></i><span>${mensagem}</span>`;
+      document.getElementById('toastContainer').appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; }, 3000);
+      setTimeout(() => toast.remove(), 3300);
+    }
+
     // ============================================================
     // INICIAR
     // ============================================================
@@ -1893,8 +2087,17 @@
       verificarStatusWhatsApp();
     });
 
+    let refreshPausado = false;
+    let ultimaInteracao = Date.now();
+
+    document.addEventListener('mousedown', () => { ultimaInteracao = Date.now(); });
+    document.addEventListener('keydown', () => { ultimaInteracao = Date.now(); });
+
     setInterval(() => {
-      carregarDados();
+      const inativo = Date.now() - ultimaInteracao > 30000;
+      const modalAberto = document.querySelector('.modal-overlay:not(.hidden)');
+      if (document.hidden || modalAberto || !inativo) return;
+      carregarDados(false);
       if (document.getElementById('tabFinanceiro').classList.contains('active')) carregarFinanceiro();
     }, CONFIG.AUTO_REFRESH);
 
@@ -1918,5 +2121,6 @@
       if (e.key === 'Enter') enviarMensagemChat();
     });
   </script>
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-[100] space-y-2"></div>
 </body>
 </html>
