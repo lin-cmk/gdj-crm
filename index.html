@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GDJ VERTEX · CRM Executivo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+  <style>
+    :root {
+      --verde-profundo: #142C23;
+      --verde-base: #1B3B2F;
+      --verde-musgo: #3C5A4B;
+      --verde-suave: #EDF3F0;
+      --dourado: #C9A227;
+      --dourado-claro: #F4ECCF;
+      --dourado-glow: rgba(201, 162, 39, 0.2);
+      --vermelho: #A83226;
+      --vermelho-soft: #FDF2F1;
+    }
+
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #f1f5f9; color: #0f172a; }
+
+    .font-serif { font-family: 'Playfair Display', serif; }
+
+    /* CARDS */
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #cbd5e1; }
+
+    /* CARD PREMIUM GDJ (com detalhe dourado) */
+    .card-premium {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(20, 44, 35, 0.07);
+      border: 1px solid rgba(201, 162, 39, 0.15);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .card-premium:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(20, 44, 35, 0.12);
+      border-color: rgba(201, 162, 39, 0.4);
+    }
+
+    /* HEADER */
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      border-bottom: 1px solid #e2e8f0;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .stat-number { font-size: 2rem; font-weight: 800; color: #0f172a; }
+    .stat-label {
+      color: #64748b; font-size: 0.7rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .stat-icon { font-size: 1.2rem; opacity: 0.6; }
+
+    /* BADGES */
+    .badge {
+      padding: 3px 14px; border-radius: 20px; font-size: 0.7rem;
+      font-weight: 600; display: inline-block; white-space: nowrap;
+    }
+    .badge-novo { background: #dcfce7; color: #166534; }
+    .badge-contatado { background: #dbeafe; color: #1e40af; }
+    .badge-qualificado { background: #ede9fe; color: #5b21b6; }
+    .badge-proposta_enviada { background: #fef3c7; color: #92400e; }
+    .badge-cliente { background: #d1fae5; color: #065f46; }
+    .badge-perdido { background: #fee2e2; color: #991b1b; }
+
+    /* TABELAS */
+    .table-row { border-bottom: 1px solid #f1f5f9; transition: all 0.15s ease; }
+    .table-row:hover { background: #f8fafc; }
+    .table-header {
+      background: #f8fafc; color: #475569; font-size: 0.65rem;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+
+    /* ABAS */
+    .tab-btn {
+      padding: 8px 18px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+      color: #64748b; background: transparent; border: 1px solid transparent;
+      cursor: pointer; transition: all 0.15s ease;
+      display: inline-flex; align-items: center;
+    }
+    .tab-btn.active { background: #0f172a; color: #ffffff; }
+    .tab-btn:not(.active):hover { background: #f1f5f9; }
+
+    /* KANBAN */
+    .kanban-column {
+      background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;
+      min-height: 200px; transition: all 0.2s ease;
+    }
+    .kanban-column.drag-over {
+      background: #ede9fe;
+      border-color: #a78bfa;
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+    }
+    .kanban-card {
+      background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0;
+      padding: 12px 14px; margin-bottom: 8px; cursor: grab;
+      transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      position: relative;
+    }
+    .kanban-card:active { cursor: grabbing; }
+    .kanban-card:hover { border-color: #94a3b8; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .kanban-card.sortable-ghost { opacity: 0.4; background: #ede9fe; }
+    .kanban-card.sortable-drag { transform: rotate(2deg); box-shadow: 0 12px 24px rgba(0,0,0,0.15); }
+
+    /* CARD KANBAN PREMIUM (FUNIL) */
+    .funnel-card {
+      background: #ffffff; border-radius: 12px;
+      padding: 12px 14px; margin-bottom: 10px; cursor: grab;
+      border-left: 4px solid #e2e8f0;
+      transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .funnel-card:hover {
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    .funnel-card .temp-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 0.65rem; padding: 2px 8px;
+      border-radius: 20px; font-weight: 600;
+    }
+    .temp-quente { background: #fee2e2; color: #991b1b; }
+    .temp-morno { background: #fef3c7; color: #92400e; }
+    .temp-frio { background: #dbeafe; color: #1e40af; }
+
+    /* BOTÕES */
+    .btn-primary {
+      background: #0f172a; color: #ffffff; border: none; padding: 8px 18px;
+      border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+      transition: all 0.15s ease; cursor: pointer;
+    }
+    .btn-primary:hover { background: #1e293b; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-outline {
+      background: transparent; color: #475569; border: 1px solid #e2e8f0;
+      padding: 8px 18px; border-radius: 10px; font-size: 0.8rem;
+      font-weight: 500; transition: all 0.15s ease; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-outline:hover { background: #f1f5f9; border-color: #94a3b8; }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #C9A227, #A88319);
+      color: #ffffff; border: none; padding: 8px 18px;
+      border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+      transition: all 0.15s ease; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
+    }
+    .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(201, 162, 39, 0.45); }
+
+    .btn-emerald {
+      background: #10b981; color: #fff; border: none; padding: 8px 18px;
+      border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+      transition: all 0.15s ease; cursor: pointer;
+    }
+    .btn-emerald:hover { background: #059669; transform: translateY(-1px); }
+
+    .input-field {
+      border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 14px;
+      font-size: 0.85rem; color: #0f172a; background: #ffffff;
+      transition: all 0.15s ease; width: 100%;
+    }
+    .input-field:focus {
+      outline: none; border-color: #0f172a; box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+    }
+
+    /* PROGRESS */
+    .progress-bar { height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; border-radius: 10px;
+      background: linear-gradient(90deg, #C9A227, #F4ECCF);
+      transition: width 1s ease;
+    }
+
+    /* MODAL */
+    .modal-overlay { background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(6px); }
+
+    /* CHAT */
+    .chat-bubble {
+      max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 0.85rem;
+      margin-bottom: 8px; word-wrap: break-word;
+    }
+    .chat-recebida { background: #f1f5f9; color: #0f172a; align-self: flex-start; border-bottom-left-radius: 2px; }
+    .chat-enviada { background: #dcfce7; color: #14532d; align-self: flex-end; border-bottom-right-radius: 2px; margin-left: auto; }
+    .chat-time { font-size: 0.6rem; color: #94a3b8; margin-top: 2px; }
+
+    /* LOADING */
+    .loading { display: none; }
+    .loading.active { display: flex; }
+
+    /* ANIMAÇÕES */
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* SCROLL */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* FUNIL GRÁFICO */
+    .funnel-step {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 12px; background: #f8fafc;
+      border-radius: 8px; margin-bottom: 6px;
+      border-left: 3px solid #C9A227;
+    }
+    .funnel-bar {
+      height: 8px; border-radius: 4px; transition: width 0.5s ease;
+      background: linear-gradient(90deg, #C9A227, #1B3B2F);
+    }
+
+    /* NOTAS BLOCK */
+    .notas-block {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 10px; padding: 12px;
+    }
+    .notas-textarea {
+      background: transparent; border: none; width: 100%;
+      resize: vertical; font-size: 0.85rem; color: #78350f;
+      min-height: 100px; font-family: 'Inter', sans-serif;
+    }
+    .notas-textarea:focus { outline: none; }
+  </style>
+</head>
+<body>
+
+  <!-- LOADING -->
+  <div id="loading" class="loading fixed inset-0 z-50 items-center justify-center modal-overlay">
+    <div class="bg-white p-8 rounded-2xl text-center shadow-xl">
+      <div class="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-slate-600 text-sm">Carregando dados...</p>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header fixed top-0 left-0 right-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+
+        <div class="flex items-center gap-3">
+          <img
+            src="https://github.com/lin-cmk/gdj-rh-consultoria/blob/3c79860511387edfca53a0238775d17952b53f9d/public/images/GDL_LOGO.png?raw=true"
+            alt="GDJ Vertex"
+            class="h-10 w-auto object-contain"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"
+          />
+          <span class="text-xl font-bold font-serif text-slate-900" style="display:none;">
+            GDJ<span class="text-amber-600">VERTEX</span>
+          </span>
+          <div class="hidden md:flex flex-col">
+            <span class="text-sm font-bold font-serif text-slate-900 leading-none">GDJ VERTEX</span>
+            <span class="text-[0.6rem] text-slate-400 uppercase tracking-wider">Gestão Estratégica de RH</span>
+          </div>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-3">
+          <img
+            src="https://github.com/lin-cmk/gdj-rh-consultoria/blob/98819412b09d347a3308e8fb58ed748c8101b8cc/public/images/logo.jpeg?raw=true"
+            alt="Gisele De Jesus"
+            class="w-10 h-10 rounded-full object-cover border-2 border-amber-400"
+            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2220%22 fill=%22%23C9A227%22/%3E%3Ctext x=%2220%22 y=%2228%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2218%22 font-weight=%22bold%22%3EG%3C/text%3E%3C/svg%3E'" />
+          <div class="hidden lg:block">
+            <p class="text-sm font-semibold text-slate-900 leading-none">Gisele De Jesus</p>
+            <p class="text-xs text-amber-600">CEO — GDJ Vertex</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a href="https://gdj-apresentacao.netlify.app" target="_blank" class="btn-gold !py-1.5 !px-3 text-xs hidden md:inline-flex" title="Abrir Apresentação">
+            <i class="fas fa-presentation"></i> Apresentação
+          </a>
+          <span class="text-xs text-slate-400 hidden lg:block" id="ultimaAtualizacao">--</span>
+          <button onclick="carregarTudo()" class="btn-outline !p-2 !rounded-full hover:rotate-45 transition-all" title="Atualizar">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <main class="pt-20 pb-8 px-4 max-w-7xl mx-auto">
+
+    <!-- KPIs PRINCIPAIS -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-4 fade-in">
+      <div class="card-premium p-4 text-center">
+        <p class="stat-label"><i class="fas fa-users stat-icon mr-1"></i>Total Leads</p>
+        <p class="stat-number" id="totalLeads">0</p>
+      </div>
+      <div class="card-premium p-4 text-center">
+        <p class="stat-label"><i class="fas fa-calendar-day stat-icon mr-1"></i>Hoje</p>
+        <p class="stat-number" id="leadsHoje">0</p>
+      </div>
+      <div class="card-premium p-4 text-center">
+        <p class="stat-label"><i class="fas fa-calendar-week stat-icon mr-1"></i>7 Dias</p>
+        <p class="stat-number" id="leadsSemana">0</p>
+      </div>
+      <div class="card-premium p-4 text-center">
+        <p class="stat-label"><i class="fas fa-clock stat-icon mr-1"></i>Média Dias</p>
+        <p class="stat-number" id="mediaDias">0</p>
+      </div>
+      <div class="card-premium p-4 text-center">
+        <p class="stat-label"><i class="fas fa-check-circle stat-icon mr-1"></i>Clientes</p>
+        <p class="stat-number" id="negociosFechados">0</p>
+      </div>
+      <div class="card-premium p-4 text-center">
+        <p class="stat-label"><i class="fas fa-coins stat-icon mr-1"></i>Faturamento</p>
+        <p class="stat-number text-lg" id="faturamento">R$ 0</p>
+      </div>
+    </div>
+
+    <!-- KPIs FINANCEIROS -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 fade-in">
+      <div class="card-premium p-4 border-l-4 border-emerald-400">
+        <p class="stat-label"><i class="fas fa-arrow-down text-emerald-500 mr-1"></i>A Receber</p>
+        <p class="text-xl font-extrabold text-emerald-600" id="kpiAReceber">R$ 0</p>
+        <p class="text-xs text-slate-400 mt-1" id="kpiAReceberInfo">--</p>
+      </div>
+      <div class="card-premium p-4 border-l-4 border-red-400">
+        <p class="stat-label"><i class="fas fa-exclamation-triangle text-red-500 mr-1"></i>Atrasado</p>
+        <p class="text-xl font-extrabold text-red-600" id="kpiAtrasado">R$ 0</p>
+        <p class="text-xs text-slate-400 mt-1" id="kpiAtrasadoInfo">--</p>
+      </div>
+      <div class="card-premium p-4 border-l-4 border-amber-400">
+        <p class="stat-label"><i class="fas fa-arrow-up text-amber-500 mr-1"></i>A Pagar</p>
+        <p class="text-xl font-extrabold text-amber-600" id="kpiAPagar">R$ 0</p>
+        <p class="text-xs text-slate-400 mt-1" id="kpiAPagarInfo">--</p>
+      </div>
+      <div class="card-premium p-4 border-l-4 border-blue-400">
+        <p class="stat-label"><i class="fas fa-balance-scale text-blue-500 mr-1"></i>Saldo Mês</p>
+        <p class="text-xl font-extrabold text-blue-600" id="kpiSaldoMes">R$ 0</p>
+        <p class="text-xs text-slate-400 mt-1" id="kpiSaldoMesInfo">--</p>
+      </div>
+    </div>
+
+    <!-- META -->
+    <div class="card-premium p-5 mb-6 fade-in">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <p class="stat-label"><i class="fas fa-bullseye text-amber-500 mr-2"></i>Meta Recorrente</p>
+          <p class="text-2xl font-extrabold font-serif text-slate-900" id="metaValor">R$ 0</p>
+          <p class="text-xs text-slate-400">Definida na aba CONFIG</p>
+        </div>
+        <div class="flex-1 w-full">
+          <div class="flex justify-between text-xs text-slate-400 mb-1">
+            <span>Progresso</span>
+            <span id="percentualMeta">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="barraMeta" style="width:0%"></div>
+          </div>
+          <p class="text-xs text-slate-400 mt-2" id="textoMeta">Arrecadado: R$ 0 de R$ 0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRÁFICOS + WHATSAPP -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 fade-in">
+      <div class="card-premium p-5">
+        <h3 class="text-slate-600 text-xs font-semibold uppercase tracking-wider mb-4">
+          <i class="fas fa-chart-pie text-amber-500 mr-2"></i>Origem dos Leads
+        </h3>
+        <div id="origemChart" class="space-y-2"></div>
+      </div>
+      <div class="card-premium p-5">
+        <h3 class="text-slate-600 text-xs font-semibold uppercase tracking-wider mb-4">
+          <i class="fas fa-chart-bar text-emerald-500 mr-2"></i>Interesse
+        </h3>
+        <div id="interesseChart" class="space-y-2"></div>
+      </div>
+      <div class="card-premium p-5">
+        <h3 class="text-slate-600 text-xs font-semibold uppercase tracking-wider mb-4">
+          <i class="fab fa-whatsapp text-emerald-500 mr-2"></i>WhatsApp (Evolution)
+        </h3>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-300" id="whatsappStatusDot"></span>
+          <span class="text-sm text-slate-600" id="whatsappStatusLabel">Verificando...</span>
+          <span class="text-xs text-slate-400 ml-auto" id="whatsappUltimaVerif">--</span>
+        </div>
+        <button onclick="verificarStatusWhatsApp()" class="btn-outline text-xs !py-1.5 w-full">
+          <i class="fas fa-sync-alt mr-1"></i> Verificar Conexão
+        </button>
+      </div>
+    </div>
+
+    <!-- ABAS -->
+    <div class="flex flex-wrap gap-2 mb-4 fade-in">
+      <button class="tab-btn active" id="tabBtnLeads" onclick="mudarAba('leads')">
+        <i class="fas fa-list-ul mr-1"></i> Leads
+      </button>
+      <button class="tab-btn" id="tabBtnFunil" onclick="mudarAba('funil')">
+        <i class="fas fa-filter mr-1"></i> Funil de Vendas
+      </button>
+      <button class="tab-btn" id="tabBtnVagas" onclick="mudarAba('vagas')">
+        <i class="fas fa-briefcase mr-1"></i> Vagas
+      </button>
+      <button class="tab-btn" id="tabBtnCandidatos" onclick="mudarAba('candidatos')">
+        <i class="fas fa-user-tie mr-1"></i> Candidatos
+      </button>
+      <button class="tab-btn" id="tabBtnFinanceiro" onclick="mudarAba('financeiro')">
+        <i class="fas fa-coins mr-1"></i> Financeiro
+      </button>
+      <button class="tab-btn" id="tabBtnCalendario" onclick="mudarAba('calendario')">
+        <i class="fas fa-calendar-alt mr-1"></i> Calendário
+      </button>
+    </div>
+
+    <!-- ============ ABA: LEADS (tabela) ============ -->
+    <div id="tabLeads" class="tab-content active fade-in">
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <h3 class="text-slate-700 font-semibold text-sm">
+              <i class="fas fa-inbox text-amber-500 mr-2"></i>Inbox de Leads
+            </h3>
+            <span class="text-xs text-slate-400" id="totalRegistros">0 leads</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="exportarCSV()" class="btn-outline text-xs !py-1.5">
+              <i class="fas fa-file-export"></i> CSV
+            </button>
+            <button onclick="abrirNovoLead()" class="btn-primary text-xs !py-1.5">
+              <i class="fas fa-plus"></i> Novo Lead
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="table-header">
+                <th class="px-4 py-3 text-left">Nome</th>
+                <th class="px-4 py-3 text-left hidden sm:table-cell">Empresa</th>
+                <th class="px-4 py-3 text-left hidden md:table-cell">Interesse</th>
+                <th class="px-4 py-3 text-left hidden lg:table-cell">Origem</th>
+                <th class="px-4 py-3 text-left">Status</th>
+                <th class="px-4 py-3 text-right hidden md:table-cell">Valor Est.</th>
+                <th class="px-4 py-3 text-right">Dias</th>
+                <th class="px-4 py-3 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaLeads"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ABA: FUNIL DE VENDAS ============ -->
+    <div id="tabFunil" class="tab-content fade-in">
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-slate-200">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-3">
+              <h3 class="text-slate-700 font-semibold text-sm">
+                <i class="fas fa-filter text-amber-500 mr-2"></i>Funil de Vendas
+              </h3>
+              <span class="text-xs text-slate-400">Arraste os cards entre as colunas</span>
+            </div>
+            <button onclick="abrirNovoLead()" class="btn-primary text-xs !py-1.5">
+              <i class="fas fa-plus"></i> Novo Lead
+            </button>
+          </div>
+
+          <!-- GRÁFICO DE FUNIL -->
+          <div class="bg-slate-50 rounded-xl p-4">
+            <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+              <i class="fas fa-chart-area text-amber-500 mr-1"></i> Visão Geral do Funil
+            </h4>
+            <div id="funnelChart" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <div class="p-4 overflow-x-auto">
+          <div class="grid grid-flow-col auto-cols-[minmax(260px,1fr)] gap-4" id="kanbanFunil" style="min-width:100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ABA: VAGAS ============ -->
+    <div id="tabVagas" class="tab-content">
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <h3 class="text-slate-700 font-semibold text-sm">
+              <i class="fas fa-briefcase text-amber-500 mr-2"></i>Vagas em Andamento
+            </h3>
+            <span class="text-xs text-slate-400" id="totalVagas">0 vagas</span>
+          </div>
+          <button onclick="abrirNovaVaga()" class="btn-primary text-xs !py-1.5">
+            <i class="fas fa-plus"></i> Nova Vaga
+          </button>
+        </div>
+        <div class="p-4 overflow-x-auto">
+          <div class="grid grid-flow-col auto-cols-[minmax(230px,1fr)] gap-4" id="kanbanVagas" style="min-width:100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ABA: CANDIDATOS ============ -->
+    <div id="tabCandidatos" class="tab-content">
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <h3 class="text-slate-700 font-semibold text-sm">
+              <i class="fas fa-user-tie text-amber-500 mr-2"></i>Candidatos
+            </h3>
+            <select id="filtroVagaCandidatos" class="input-field !w-56 !py-1 text-xs" onchange="carregarCandidatos()">
+              <option value="">Todas as vagas</option>
+            </select>
+            <span class="text-xs text-slate-400" id="totalCandidatos">0 candidatos</span>
+          </div>
+          <button onclick="abrirNovoCandidato()" class="btn-primary text-xs !py-1.5">
+            <i class="fas fa-plus"></i> Novo Candidato
+          </button>
+        </div>
+        <div class="p-4 overflow-x-auto">
+          <div class="grid grid-flow-col auto-cols-[minmax(230px,1fr)] gap-4" id="kanbanCandidatos" style="min-width:100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ABA: FINANCEIRO ============ -->
+    <div id="tabFinanceiro" class="tab-content">
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <h3 class="text-slate-700 font-semibold text-sm">
+              <i class="fas fa-coins text-amber-500 mr-2"></i>Financeiro
+            </h3>
+            <select id="filtroTipoFinanceiro" class="input-field !w-40 !py-1 text-xs" onchange="renderFinanceiro()">
+              <option value="">Todos os tipos</option>
+              <option value="receita">Só Receitas</option>
+              <option value="despesa">Só Despesas</option>
+            </select>
+            <select id="filtroStatusFinanceiro" class="input-field !w-40 !py-1 text-xs" onchange="renderFinanceiro()">
+              <option value="">Todos os status</option>
+              <option value="pendente">Pendentes</option>
+              <option value="atrasado">Atrasados</option>
+              <option value="recebido">Recebidos</option>
+              <option value="pago">Pagos</option>
+            </select>
+            <span class="text-xs text-slate-400" id="totalFinanceiro">0 lançamentos</span>
+          </div>
+          <button onclick="abrirNovoLancamento()" class="btn-primary text-xs !py-1.5">
+            <i class="fas fa-plus"></i> Novo Lançamento
+          </button>
+        </div>
+
+        <div class="p-4">
+          <div id="tabelaFinanceiro"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ABA: CALENDÁRIO ============ -->
+    <div id="tabCalendario" class="tab-content">
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <h3 class="text-slate-700 font-semibold text-sm">
+              <i class="fas fa-calendar-alt text-amber-500 mr-2"></i>Agenda — Próximos 7 dias
+            </h3>
+            <span class="text-xs text-slate-400" id="totalEventos">0 eventos</span>
+          </div>
+          <button onclick="carregarCalendario()" class="btn-outline text-xs !py-1.5">
+            <i class="fas fa-sync-alt"></i> Atualizar
+          </button>
+        </div>
+        <div class="p-4" id="calendarioLista"></div>
+      </div>
+    </div>
+
+    <div class="text-center text-slate-300 text-[0.6rem] mt-6 tracking-wider">
+      GDJ VERTEX © 2026 • CRM & Painel de Gestão • v7.0
+    </div>
+
+  </main>  <!-- ================= MODAL: NOVO LEAD ================= -->
+  <div id="modalNovoLead" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-user-plus text-amber-500 mr-2"></i>Novo Lead</h3>
+        <button onclick="fecharModal('modalNovoLead')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-3">
+        <input type="text" id="novoNome" class="input-field" placeholder="Nome completo" />
+        <input type="email" id="novoEmail" class="input-field" placeholder="E-mail" />
+        <input type="text" id="novoTelefone" class="input-field" placeholder="Telefone (com DDD)" />
+        <input type="text" id="novoEmpresa" class="input-field" placeholder="Empresa" />
+        <input type="text" id="novoInteresse" class="input-field" placeholder="Interesse (ex: DP, RH, NR1)" />
+        <input type="number" id="novoValorEstimado" class="input-field" placeholder="Valor estimado (R$) — opcional" step="0.01" min="0" />
+        <select id="novoStatus" class="input-field"></select>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button onclick="salvarNovoLead()" id="btnSalvarLead" class="btn-primary flex-1">Salvar</button>
+        <button onclick="fecharModal('modalNovoLead')" class="btn-outline flex-1">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: STATUS + VALOR + NOTAS ================= -->
+  <div id="modalStatus" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-pen-to-square text-amber-500 mr-2"></i>Editar Lead</h3>
+        <button onclick="fecharModal('modalStatus')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <p class="text-sm text-slate-500 mb-4">Lead: <strong id="statusLeadNome" class="text-slate-900">--</strong></p>
+
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="text-xs text-slate-500 mb-1 block">Status</label>
+          <select id="selectNovoStatus" class="input-field"></select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 mb-1 block">💵 Valor estimado (R$)</label>
+          <input type="number" id="statusLeadValor" class="input-field" step="0.01" min="0" placeholder="0,00" />
+        </div>
+      </div>
+
+      <div class="notas-block mb-4">
+        <label class="text-xs font-semibold text-amber-700 mb-2 block">
+          <i class="fas fa-clipboard-list mr-1"></i> 📝 Notas da Negociação
+        </label>
+        <textarea id="statusLeadNotas" class="notas-textarea" placeholder="Ex: Reunião 10/09 — pediu proposta em 3 dias. Decisor: Roberto (CFO)."></textarea>
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="confirmarMudarStatus()" id="btnConfirmarStatus" class="btn-primary flex-1">
+          <i class="fas fa-check mr-1"></i> Confirmar
+        </button>
+        <button onclick="fecharModal('modalStatus')" class="btn-outline flex-1">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CHAT WHATSAPP ================= -->
+  <div id="modalChat" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-xl flex flex-col" style="height:70vh;">
+      <div class="flex items-center justify-between p-4 border-b border-slate-200">
+        <div>
+          <h3 class="text-base font-bold text-slate-900" id="chatLeadNome">Lead</h3>
+          <p class="text-xs text-slate-400" id="chatLeadTelefone">--</p>
+        </div>
+        <button onclick="fecharChat()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="chatMensagens" class="flex-1 overflow-y-auto p-4 flex flex-col"></div>
+      <div class="p-3 border-t border-slate-200 flex gap-2">
+        <input type="text" id="chatInputMensagem" class="input-field" placeholder="Digite uma mensagem..." />
+        <button onclick="enviarMensagemChat()" id="btnEnviarChat" class="btn-emerald !px-4">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: NOVA VAGA ================= -->
+  <div id="modalNovaVaga" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-briefcase text-amber-500 mr-2"></i>Nova Vaga</h3>
+        <button onclick="fecharModal('modalNovaVaga')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-3">
+        <input type="text" id="vagaTitulo" class="input-field" placeholder="Título da vaga" />
+        <input type="text" id="vagaEmpresa" class="input-field" placeholder="Empresa contratante" />
+        <input type="text" id="vagaResponsavel" class="input-field" placeholder="Responsável RH" />
+        <input type="number" id="vagaQtdVagas" class="input-field" placeholder="Qtd. de vagas" min="1" value="1" />
+        <textarea id="vagaDescricao" class="input-field" rows="3" placeholder="Descrição / requisitos"></textarea>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button onclick="salvarVaga()" id="btnSalvarVaga" class="btn-primary flex-1">Salvar</button>
+        <button onclick="fecharModal('modalNovaVaga')" class="btn-outline flex-1">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: STATUS DA VAGA ================= -->
+  <div id="modalStatusVaga" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-exchange-alt text-amber-500 mr-2"></i>Status da Vaga</h3>
+        <button onclick="fecharModal('modalStatusVaga')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <p class="text-sm text-slate-500 mb-3">Vaga: <strong id="vagaStatusTitulo">--</strong></p>
+      <select id="selectStatusVaga" class="input-field mb-3"></select>
+      <div class="flex gap-3">
+        <button onclick="salvarStatusVaga()" id="btnSalvarStatusVaga" class="btn-primary flex-1">Salvar</button>
+        <button onclick="excluirVaga()" class="btn-outline flex-1 text-red-500 border-red-200">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: NOVO CANDIDATO ================= -->
+  <div id="modalNovoCandidato" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-user-tie text-amber-500 mr-2"></i>Novo Candidato</h3>
+        <button onclick="fecharModal('modalNovoCandidato')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-3">
+        <select id="candidatoVaga" class="input-field"></select>
+        <input type="text" id="candidatoNome" class="input-field" placeholder="Nome completo" />
+        <input type="text" id="candidatoTelefone" class="input-field" placeholder="Telefone (com DDD)" />
+        <input type="email" id="candidatoEmail" class="input-field" placeholder="E-mail" />
+        <input type="text" id="candidatoCargoDesejado" class="input-field" placeholder="Cargo pretendido" />
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button onclick="salvarCandidato()" id="btnSalvarCandidato" class="btn-primary flex-1">Salvar</button>
+        <button onclick="fecharModal('modalNovoCandidato')" class="btn-outline flex-1">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ETAPA / ENTREVISTA ================= -->
+  <div id="modalEtapaCandidato" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-calendar-check text-amber-500 mr-2"></i>Atualizar Candidato</h3>
+        <button onclick="fecharModal('modalEtapaCandidato')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <p class="text-sm text-slate-500 mb-3">Candidato: <strong id="etapaCandidatoNome">--</strong></p>
+      <label class="text-xs text-slate-500">Etapa</label>
+      <select id="selectEtapaCandidato" class="input-field mb-3"></select>
+      <label class="text-xs text-slate-500">Data/hora da entrevista</label>
+      <input type="datetime-local" id="dataEntrevistaCandidato" class="input-field mb-3" />
+      <label class="text-xs text-slate-500">Entrevistador</label>
+      <input type="text" id="entrevistadorCandidato" class="input-field mb-3" placeholder="Nome do entrevistador" />
+      <label class="text-xs text-slate-500">Resultado / Observações</label>
+      <textarea id="obsCandidato" class="input-field mb-4" rows="3"></textarea>
+      <div class="flex gap-3">
+        <button onclick="salvarEtapaCandidato()" id="btnSalvarEtapa" class="btn-primary flex-1">Salvar</button>
+        <button onclick="excluirCandidato()" class="btn-outline flex-1 text-red-500 border-red-200">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: NOVO LANÇAMENTO FINANCEIRO ================= -->
+  <div id="modalNovoLancamento" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-coins text-amber-500 mr-2"></i>Novo Lançamento</h3>
+        <button onclick="fecharModal('modalNovoLancamento')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs text-slate-500 mb-1 block">Tipo</label>
+          <select id="lancTipo" class="input-field" onchange="atualizarCategoriasLanc()">
+            <option value="receita">💰 Receita</option>
+            <option value="despesa">📉 Despesa</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 mb-1 block">Categoria</label>
+          <select id="lancCategoria" class="input-field"></select>
+        </div>
+        <input type="text" id="lancDescricao" class="input-field" placeholder="Descrição" />
+        <input type="number" id="lancValor" class="input-field" placeholder="Valor (R$)" step="0.01" min="0" />
+        <input type="date" id="lancDataPrevista" class="input-field" />
+        <input type="text" id="lancEmpresa" class="input-field" placeholder="Empresa (opcional)" />
+        <textarea id="lancObs" class="input-field" rows="2" placeholder="Observações"></textarea>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button onclick="salvarLancamento()" id="btnSalvarLanc" class="btn-primary flex-1">Salvar</button>
+        <button onclick="fecharModal('modalNovoLancamento')" class="btn-outline flex-1">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: EDITAR LANÇAMENTO ================= -->
+  <div id="modalEditarLancamento" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-pen text-amber-500 mr-2"></i>Editar Lançamento</h3>
+        <button onclick="fecharModal('modalEditarLancamento')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-3">
+        <input type="text" id="editLancDescricao" class="input-field" placeholder="Descrição" />
+        <input type="number" id="editLancValor" class="input-field" placeholder="Valor (R$)" step="0.01" min="0" />
+        <input type="date" id="editLancDataPrevista" class="input-field" />
+        <input type="date" id="editLancDataReal" class="input-field" />
+        <select id="editLancStatus" class="input-field">
+          <option value="pendente">Pendente</option>
+          <option value="atrasado">Atrasado</option>
+          <option value="recebido">Recebido</option>
+          <option value="pago">Pago</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+        <textarea id="editLancObs" class="input-field" rows="2" placeholder="Observações"></textarea>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button onclick="salvarEdicaoLancamento()" id="btnSalvarEditLanc" class="btn-primary flex-1">Salvar</button>
+        <button onclick="excluirLancamento()" class="btn-outline flex-1 text-red-500 border-red-200">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // CONFIGURAÇÕES
+    // ============================================================
+    const CONFIG = {
+      API_URL: "https://script.google.com/macros/s/AKfycbzh0RzG1TmcFD-op3BK6WLGRPnUqN7hTdFnPWtD_62nvyV7yq3NB29wssCntDrxv-Dr/exec",
+      AUTO_REFRESH: 60000
+    };
+
+    const STATUS_LABELS = {
+      novo: "Novo", contatado: "Contatado", qualificado: "Qualificado",
+      proposta_enviada: "Proposta Enviada", cliente: "Cliente", perdido: "Perdido"
+    };
+    const KANBAN_ICONS = {
+      novo: "🟢", contatado: "🔵", qualificado: "🟣",
+      proposta_enviada: "🟡", cliente: "✅", perdido: "🔴"
+    };
+    const KANBAN_BORDERS = {
+      novo: "#10b981", contatado: "#3b82f6", qualificado: "#8b5cf6",
+      proposta_enviada: "#f59e0b", cliente: "#059669", perdido: "#ef4444"
+    };
+    const STATUS_VAGA = {
+      aberta: "Aberta", triagem: "Em Triagem", entrevistas: "Entrevistas",
+      proposta: "Proposta", fechada: "Fechada", cancelada: "Cancelada"
+    };
+    const ETAPAS_CANDIDATO = {
+      inscrito: "Inscrito", triagem: "Triagem",
+      entrevista_agendada: "Entrevista Agendada", entrevista_realizada: "Entrevista Realizada",
+      teste: "Teste/Avaliação", proposta_enviada: "Proposta Enviada",
+      contratado: "Contratado", reprovado: "Reprovado"
+    };
+    const CATEGORIAS_RECEITA = ["vaga_fechada", "consultoria", "treinamento", "outros"];
+    const CATEGORIAS_DESPESA = ["trafego_pago", "campanha", "visita_presencial", "internet", "luz", "agua", "telefone", "software", "outros"];
+    const CATEGORIAS_LABELS = {
+      vaga_fechada: "Vaga Fechada", consultoria: "Consultoria",
+      treinamento: "Treinamento", trafego_pago: "Tráfego Pago",
+      campanha: "Campanha", visita_presencial: "Visita Presencial",
+      internet: "Internet", luz: "Luz", agua: "Água", telefone: "Telefone",
+      software: "Software", outros: "Outros"
+    };
+
+    let leadsData = [];
+    let vagasData = [];
+    let candidatosData = [];
+    let financeiroData = [];
+    let dashboardFinanceiro = {};
+    let statusValidos = ["novo","contatado","qualificado","proposta_enviada","cliente","perdido"];
+    let leadIdEmEdicao = null;
+    let leadIdChatAtivo = null;
+    let vagaIdEmEdicao = null;
+    let candidatoIdEmEdicao = null;
+    let lancamentoIdEmEdicao = null;
+    let intervaloChat = null;
+
+    // ============================================================
+    // NAVEGAÇÃO ABAS
+    // ============================================================
+    function mudarAba(aba) {
+      ['leads','funil','vagas','candidatos','financeiro','calendario'].forEach(a => {
+        const tab = document.getElementById('tab' + capitalizar(a));
+        const btn = document.getElementById('tabBtn' + capitalizar(a));
+        if (tab) tab.classList.toggle('active', a === aba);
+        if (btn) btn.classList.toggle('active', a === aba);
+      });
+      if (aba === 'funil') renderKanbanFunil();
+      if (aba === 'financeiro') carregarFinanceiro();
+      if (aba === 'calendario') carregarCalendario();
+    }
+    function capitalizar(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    // ============================================================
+    // CARREGAR TUDO
+    // ============================================================
+    async function carregarTudo() {
+      await carregarDados();
+      await carregarVagas();
+      await carregarCandidatos();
+      await carregarFinanceiro();
+    }
+
+    // ============================================================
+    // CARREGAR CRM
+    // ============================================================
+    async function carregarDados() {
+      const loading = document.getElementById('loading');
+      loading.classList.add('active');
+      try {
+        const response = await fetch(CONFIG.API_URL + '?action=dados_crm');
+        const data = await response.json();
+        if (!data.sucesso) { loading.classList.remove('active'); return; }
+
+        if (data.statusValidos?.length) statusValidos = data.statusValidos;
+        leadsData = data.leads || [];
+        dashboardFinanceiro = data.financeiro || {};
+
+        preencherSelectsStatus();
+        atualizarMetricas(data);
+        atualizarKPIsFinanceiros(dashboardFinanceiro);
+        atualizarMeta(data);
+        atualizarGraficos(data);
+        atualizarTabela(leadsData);
+        atualizarTimestamp();
+      } catch (error) {
+        console.error('Erro:', error);
+        document.getElementById('tabelaLeads').innerHTML =
+          `<tr><td colspan="8" class="text-center text-slate-400 py-8">Erro ao carregar. Verifique conexão.</td></tr>`;
+      }
+      loading.classList.remove('active');
+    }
+
+    function preencherSelectsStatus() {
+      const opcoes = statusValidos.map(st =>
+        `<option value="${st}">${STATUS_LABELS[st] || st}</option>`).join('');
+      document.getElementById('novoStatus').innerHTML = opcoes;
+      document.getElementById('selectNovoStatus').innerHTML = opcoes;
+    }
+
+    function atualizarMetricas(data) {
+      document.getElementById('totalLeads').textContent = data.total || 0;
+      document.getElementById('leadsHoje').textContent = data.hoje || 0;
+      document.getElementById('leadsSemana').textContent = data.semana || 0;
+      document.getElementById('mediaDias').textContent = data.mediaDias || 0;
+      document.getElementById('negociosFechados').textContent = data.fechados || 0;
+      document.getElementById('faturamento').textContent =
+        'R$ ' + (data.faturamento || 0).toLocaleString('pt-BR');
+    }
+
+    function atualizarKPIsFinanceiros(f) {
+      const fmt = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+      document.getElementById('kpiAReceber').textContent = fmt(f.totalAReceber);
+      document.getElementById('kpiAReceberInfo').textContent = `7d: ${fmt(f.totalAReceber7d)} · 30d: ${fmt(f.totalAReceber30d)}`;
+      document.getElementById('kpiAtrasado').textContent = fmt(f.totalAReceberAtrasado);
+      document.getElementById('kpiAtrasadoInfo').textContent = `${f.totalAtrasados || 0} item(ns) em atraso`;
+      document.getElementById('kpiAPagar').textContent = fmt(f.totalAPagar);
+      document.getElementById('kpiAPagarInfo').textContent = `7d: ${fmt(f.totalAPagar7d)}`;
+      document.getElementById('kpiSaldoMes').textContent = fmt(f.saldoPrevistoMes);
+      document.getElementById('kpiSaldoMesInfo').textContent = `Recebido: ${fmt(f.totalRecebidoMes)} · Pago: ${fmt(f.totalPagoMes)}`;
+    }
+
+    function atualizarMeta(data) {
+      const meta = data.meta || 0;
+      const fat = data.faturamento || 0;
+      const pct = meta > 0 ? Math.min((fat / meta) * 100, 100) : 0;
+      document.getElementById('metaValor').textContent = 'R$ ' + meta.toLocaleString('pt-BR');
+      document.getElementById('percentualMeta').textContent = Math.round(pct) + '%';
+      document.getElementById('barraMeta').style.width = pct + '%';
+      document.getElementById('textoMeta').textContent =
+        'Arrecadado: R$ ' + fat.toLocaleString('pt-BR') + ' de R$ ' + meta.toLocaleString('pt-BR');
+    }
+
+    function atualizarGraficos(data) {
+      const cores = ['#C9A227','#10b981','#3b82f6','#8b5cf6','#ec4899'];
+      const renderChart = (id, items, total, cor) => {
+        const c = document.getElementById(id);
+        if (!c) return;
+        const entries = Object.entries(items || {}).sort((a,b) => b[1]-a[1]);
+        if (!entries.length) { c.innerHTML = '<p class="text-slate-400 text-sm">Sem dados</p>'; return; }
+        c.innerHTML = entries.map(([n,v], i) => {
+          const pct = total > 0 ? Math.round((v/total)*100) : 0;
+          return `<div class="flex items-center gap-3">
+            <span class="text-slate-600 text-sm w-24 truncate" title="${escapeHtml(n)}">${escapeHtml(n)}</span>
+            <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full rounded-full" style="width:${pct}%;background:${cor || cores[i%cores.length]}"></div>
+            </div>
+            <span class="text-slate-400 text-xs w-8 text-right">${v}</span>
+          </div>`;
+        }).join('');
+      };
+      renderChart('origemChart', data.origens, data.total);
+      renderChart('interesseChart', data.interesses, data.total, '#10b981');
+    }
+
+    // ============================================================
+    // TABELA DE LEADS
+    // ============================================================
+    function atualizarTabela(leads) {
+      const tbody = document.getElementById('tabelaLeads');
+      document.getElementById('totalRegistros').textContent = leads.length + ' leads';
+      if (!leads?.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-slate-400 py-8">
+          <i class="fas fa-inbox text-amber-400 text-2xl block mb-2"></i>Nenhum lead cadastrado</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = leads.slice(0,200).map(lead => {
+        const st = (lead.status || 'novo').toLowerCase();
+        const valor = Number(lead.valor_estimado) || 0;
+        const temNotas = lead.notas && lead.notas.trim().length > 0;
+        return `<tr class="table-row text-sm">
+          <td class="px-4 py-3 text-slate-800 font-medium">
+            ${escapeHtml(lead.nome) || '-'}
+            ${temNotas ? '<i class="fas fa-sticky-note text-amber-500 ml-1 text-xs" title="Tem notas"></i>' : ''}
+          </td>
+          <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">${escapeHtml(lead.empresa) || '-'}</td>
+          <td class="px-4 py-3 text-slate-500 hidden md:table-cell">${escapeHtml(lead.interesse) || '-'}</td>
+          <td class="px-4 py-3 text-slate-400 hidden lg:table-cell">${escapeHtml(lead.origem) || '-'}</td>
+          <td class="px-4 py-3"><span class="badge badge-${st}">${STATUS_LABELS[st] || st}</span></td>
+          <td class="px-4 py-3 text-right hidden md:table-cell text-emerald-600 font-semibold">
+            ${valor > 0 ? 'R$ ' + valor.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—'}
+          </td>
+          <td class="px-4 py-3 text-right text-slate-400">${lead.dias ?? 0}d</td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">
+            <button onclick="abrirChat('${lead.id}')" class="p-1.5 text-emerald-500 hover:bg-emerald-50 rounded" title="WhatsApp">
+              <i class="fab fa-whatsapp"></i></button>
+            <button onclick="abrirModalStatus('${lead.id}')" class="p-1.5 text-slate-500 hover:bg-slate-100 rounded" title="Editar">
+              <i class="fas fa-pen"></i></button>
+            <button onclick="excluirLead('${lead.id}')" class="p-1.5 text-red-400 hover:bg-red-50 rounded" title="Excluir">
+              <i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ============================================================
+    // KANBAN FUNIL (a estrela ⭐)
+    // ============================================================
+    function renderKanbanFunil() {
+      const container = document.getElementById('kanbanFunil');
+      renderFunnelChart();
+
+      container.innerHTML = statusValidos.map(st => {
+        const items = leadsData.filter(l => (l.status || 'novo').toLowerCase() === st);
+        const totalValor = items.reduce((s,l) => s + (Number(l.valor_estimado)||0), 0);
+        return `<div class="kanban-column p-3" data-status="${st}">
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+            <div>
+              <span class="text-slate-700 text-sm font-bold">${KANBAN_ICONS[st]} ${STATUS_LABELS[st] || st}</span>
+              <div class="text-xs text-emerald-600 font-semibold mt-0.5">
+                ${totalValor > 0 ? 'R$ ' + totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2}) : ''}
+              </div>
+            </div>
+            <span class="text-slate-400 text-xs bg-white px-2 py-0.5 rounded-full border border-slate-200 font-bold">${items.length}</span>
+          </div>
+          <div class="space-y-2 max-h-[600px] overflow-y-auto funnel-dropzone" data-status="${st}">
+            ${items.length === 0 ? '<div class="text-slate-300 text-xs text-center py-6">Arraste aqui</div>' :
+              items.map(l => renderFunnelCard(l, st)).join('')}
+          </div>
+        </div>`;
+      }).join('');
+
+      // SortableJS
+      document.querySelectorAll('.funnel-dropzone').forEach(zone => {
+        new Sortable(zone, {
+          group: 'funil',
+          animation: 200,
+          ghostClass: 'sortable-ghost',
+          dragClass: 'sortable-drag',
+          onEnd: async (evt) => {
+            const id = evt.item.dataset.id;
+            const novoStatus = evt.to.dataset.status;
+            const statusAntigo = evt.from.dataset.status;
+            if (novoStatus === statusAntigo) return;
+            await moverLeadKanban(id, novoStatus);
+          }
+        });
+      });
+    }
+
+    function renderFunnelCard(lead, st) {
+      const dias = lead.dias ?? 0;
+      let temp = 'frio', icon = '❄️', label = 'Frio';
+      if (dias <= 3) { temp = 'quente'; icon = '🔥'; label = 'Quente'; }
+      else if (dias <= 7) { temp = 'morno'; icon = '🌤️'; label = 'Morno'; }
+
+      const valor = Number(lead.valor_estimado) || 0;
+      const notas = lead.notas ? lead.notas.substring(0, 50) : '';
+
+      return `<div class="funnel-card sortable-item" data-id="${lead.id}" style="border-left-color:${KANBAN_BORDERS[st]}">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <div class="font-semibold text-slate-900 text-sm truncate">${escapeHtml(lead.nome) || 'Anônimo'}</div>
+          <span class="temp-badge temp-${temp}">${icon} ${label}</span>
+        </div>
+        ${lead.empresa ? `<div class="text-xs text-slate-600 truncate"><i class="fas fa-building mr-1"></i>${escapeHtml(lead.empresa)}</div>` : ''}
+        ${lead.interesse ? `<div class="text-xs text-slate-500 truncate"><i class="fas fa-tag mr-1"></i>${escapeHtml(lead.interesse)}</div>` : ''}
+        ${valor > 0 ? `<div class="text-xs text-emerald-600 font-bold mt-1">💵 R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>` : ''}
+        ${notas ? `<div class="text-[0.65rem] text-amber-700 mt-1 italic truncate" title="${escapeHtml(lead.notas)}">📝 ${escapeHtml(notas)}${lead.notas.length > 50 ? '...' : ''}</div>` : ''}
+        <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+          <span class="text-[0.65rem] text-slate-400">${escapeHtml(lead.origem) || ''}</span>
+          <span class="text-[0.65rem] text-slate-400"><i class="fas fa-clock mr-0.5"></i>${dias}d</span>
+        </div>
+        <div class="flex gap-1 mt-2">
+          <button onclick="event.stopPropagation(); abrirModalStatus('${lead.id}')" class="flex-1 text-[0.65rem] bg-slate-100 hover:bg-slate-200 py-1 rounded font-semibold">
+            <i class="fas fa-pen"></i> Editar
+          </button>
+          <button onclick="event.stopPropagation(); abrirChat('${lead.id}')" class="flex-1 text-[0.65rem] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 py-1 rounded font-semibold">
+            <i class="fab fa-whatsapp"></i> Chat
+          </button>
+        </div>
+      </div>`;
+    }
+
+    function renderFunnelChart() {
+      const container = document.getElementById('funnelChart');
+      const counts = statusValidos.map(st => ({
+        status: st,
+        count: leadsData.filter(l => (l.status||'novo').toLowerCase() === st).length,
+        valor: leadsData.filter(l => (l.status||'novo').toLowerCase() === st)
+                       .reduce((s,l) => s + (Number(l.valor_estimado)||0), 0)
+      }));
+      const max = Math.max(...counts.map(c => c.count), 1);
+
+      container.innerHTML = counts.map((c, i) => {
+        const pct = (c.count / max) * 100;
+        const conversao = i > 0 && counts[i-1].count > 0
+          ? Math.round((c.count / counts[i-1].count) * 100) : 100;
+        return `<div class="funnel-step">
+          <span class="text-xs font-bold w-32 truncate">${KANBAN_ICONS[c.status]} ${STATUS_LABELS[c.status]}</span>
+          <div class="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+            <div class="funnel-bar" style="width:${pct}%;background:${KANBAN_BORDERS[c.status]}"></div>
+          </div>
+          <span class="text-xs font-bold w-8 text-right">${c.count}</span>
+          <span class="text-[0.65rem] text-slate-400 w-20 text-right">${c.valor > 0 ? 'R$ '+c.valor.toLocaleString('pt-BR') : ''}</span>
+          ${i > 0 ? `<span class="text-[0.65rem] ${conversao >= 50 ? 'text-emerald-600' : 'text-red-500'} font-bold w-12 text-right">${conversao}%</span>` : '<span class="w-12"></span>'}
+        </div>`;
+      }).join('');
+    }
+
+    async function moverLeadKanban(id, novoStatus) {
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'mover_lead_kanban', id, status: novoStatus, usuario: 'Kanban Web' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) {
+          alert('Erro: ' + (data.erro || 'desconhecido'));
+          carregarDados();
+        } else {
+          await carregarDados();
+        }
+      } catch (e) {
+        alert('Erro de conexão: ' + e.message);
+        carregarDados();
+      }
+    }
+
+    // ============================================================
+    // MODAL STATUS + VALOR + NOTAS
+    // ============================================================
+    function abrirModalStatus(id) {
+      const lead = leadsData.find(l => l.id === id);
+      if (!lead) return;
+      leadIdEmEdicao = id;
+      document.getElementById('statusLeadNome').textContent = lead.nome || '--';
+      document.getElementById('selectNovoStatus').value = (lead.status || 'novo').toLowerCase();
+      document.getElementById('statusLeadValor').value = Number(lead.valor_estimado) || '';
+      document.getElementById('statusLeadNotas').value = lead.notas || '';
+      toggleModal('modalStatus', true);
+    }
+
+    async function confirmarMudarStatus() {
+      if (!leadIdEmEdicao) return;
+      const novoStatus = document.getElementById('selectNovoStatus').value;
+      const valor = parseFloat(document.getElementById('statusLeadValor').value) || 0;
+      const notas = document.getElementById('statusLeadNotas').value || '';
+      const btn = document.getElementById('btnConfirmarStatus');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+      try {
+        // 1) Status
+        await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'alterar_status', id: leadIdEmEdicao, status: novoStatus, usuario: 'CRM Web' })
+        });
+        // 2) Valor
+        await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'atualizar_valor_estimado', id: leadIdEmEdicao, valor_estimado: valor, usuario: 'CRM Web' })
+        });
+        // 3) Notas
+        await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'salvar_notas', id: leadIdEmEdicao, notas, usuario: 'CRM Web' })
+        });
+
+        fecharModal('modalStatus');
+        await carregarDados();
+        if (document.getElementById('tabFunil').classList.contains('active')) renderKanbanFunil();
+      } catch (e) {
+        alert('Erro: ' + e.message);
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check mr-1"></i> Confirmar';
+    }
+
+    // ============================================================
+    // NOVO LEAD / EXCLUIR
+    // ============================================================
+    function abrirNovoLead() {
+      toggleModal('modalNovoLead', true);
+      document.getElementById('novoNome').focus();
+    }
+
+    async function salvarNovoLead() {
+      const nome = document.getElementById('novoNome').value.trim();
+      const email = document.getElementById('novoEmail').value.trim();
+      const telefone = document.getElementById('novoTelefone').value.trim();
+      const empresa = document.getElementById('novoEmpresa').value.trim();
+      const interesse = document.getElementById('novoInteresse').value.trim();
+      const valor_estimado = parseFloat(document.getElementById('novoValorEstimado').value) || 0;
+      const status = document.getElementById('novoStatus').value;
+      if (!nome) { alert('Nome é obrigatório!'); return; }
+
+      const btn = document.getElementById('btnSalvarLead');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'criar_lead', nome, email, telefone, empresa, interesse,
+            valor_estimado, origem: 'Manual', status, usuario: 'CRM Web' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) { alert('Erro: ' + data.erro); }
+        else {
+          fecharModal('modalNovoLead');
+          ['novoNome','novoEmail','novoTelefone','novoEmpresa','novoInteresse','novoValorEstimado']
+            .forEach(id => document.getElementById(id).value = '');
+          carregarDados();
+        }
+      } catch (e) { alert('Erro: ' + e.message); }
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
+
+    async function excluirLead(id) {
+      if (!confirm('Excluir este lead?')) return;
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'excluir_lead', id, usuario: 'CRM Web' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else carregarDados();
+      } catch (e) { alert('Erro: ' + e.message); }
+    }
+
+    // ============================================================
+    // CHAT WHATSAPP
+    // ============================================================
+    async function abrirChat(id) {
+      const lead = leadsData.find(l => l.id === id);
+      if (!lead) return;
+      leadIdChatAtivo = id;
+      document.getElementById('chatLeadNome').textContent = lead.nome || 'Lead';
+      document.getElementById('chatLeadTelefone').textContent = lead.telefone || '--';
+      toggleModal('modalChat', true);
+      await carregarConversas(id);
+      intervaloChat = setInterval(() => carregarConversas(id), 8000);
+    }
+
+    function fecharChat() {
+      toggleModal('modalChat', false);
+      leadIdChatAtivo = null;
+      if (intervaloChat) { clearInterval(intervaloChat); intervaloChat = null; }
+    }
+
+    async function carregarConversas(leadId) {
+      try {
+        const resp = await fetch(CONFIG.API_URL + '?action=conversas&leadId=' + encodeURIComponent(leadId));
+        const data = await resp.json();
+        const container = document.getElementById('chatMensagens');
+        if (!data.sucesso || !data.conversas?.length) {
+          container.innerHTML = '<p class="text-slate-400 text-sm text-center my-auto">Nenhuma mensagem ainda.</p>';
+          return;
+        }
+        container.innerHTML = data.conversas.map(msg => {
+          const env = msg.direcao === 'enviada';
+          const hora = msg.data_hora ? new Date(msg.data_hora).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+          return `<div class="flex flex-col ${env ? 'items-end' : 'items-start'}">
+            <div class="chat-bubble ${env ? 'chat-enviada' : 'chat-recebida'}">${escapeHtml(msg.mensagem) || '<i>Mídia</i>'}</div>
+            <span class="chat-time">${hora}</span>
+          </div>`;
+        }).join('');
+        container.scrollTop = container.scrollHeight;
+      } catch (e) { console.error(e); }
+    }
+
+    async function enviarMensagemChat() {
+      const input = document.getElementById('chatInputMensagem');
+      const mensagem = input.value.trim();
+      if (!mensagem || !leadIdChatAtivo) return;
+      const lead = leadsData.find(l => l.id === leadIdChatAtivo);
+      if (!lead?.telefone) { alert('Lead sem telefone.'); return; }
+
+      const btn = document.getElementById('btnEnviarChat');
+      btn.disabled = true; input.value = '';
+
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'enviar_whatsapp', telefone: lead.telefone, mensagem, usuario: 'CRM Web' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else await carregarConversas(leadIdChatAtivo);
+      } catch (e) { alert('Erro: ' + e.message); }
+      btn.disabled = false;
+    }
+
+    // ============================================================
+    // STATUS WHATSAPP
+    // ============================================================
+    async function verificarStatusWhatsApp() {
+      const dot = document.getElementById('whatsappStatusDot');
+      const label = document.getElementById('whatsappStatusLabel');
+      const ultima = document.getElementById('whatsappUltimaVerif');
+      label.textContent = 'Verificando...';
+      try {
+        const resp = await fetch(CONFIG.API_URL + '?action=status_conexao');
+        const data = await resp.json();
+        if (data.sucesso && (data.status === 'open' || data.status === 'connected')) {
+          dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-emerald-500';
+          label.textContent = 'Conectado';
+        } else if (data.status === 'nao_configurado') {
+          dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-amber-400';
+          label.textContent = 'Não configurado';
+        } else {
+          dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-red-500';
+          label.textContent = 'Desconectado';
+        }
+        ultima.textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      } catch (e) {
+        dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-red-500';
+        label.textContent = 'Erro';
+      }
+    }
+
+    // ============================================================
+    // VAGAS
+    // ============================================================
+    async function carregarVagas() {
+      try {
+        const resp = await fetch(CONFIG.API_URL + '?action=listar_vagas');
+        const data = await resp.json();
+        vagasData = data.sucesso ? (data.vagas || []) : [];
+        document.getElementById('totalVagas').textContent = vagasData.length + ' vagas';
+        renderKanbanVagas();
+        preencherSelectsVaga();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderKanbanVagas() {
+      const container = document.getElementById('kanbanVagas');
+      container.innerHTML = Object.keys(STATUS_VAGA).map(st => {
+        const items = vagasData.filter(v => (v.status || 'aberta') === st);
+        return `<div class="kanban-column p-3">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-700 text-sm font-semibold">${STATUS_VAGA[st]}</span>
+            <span class="text-slate-400 text-xs bg-white px-2 py-0.5 rounded-full border border-slate-200">${items.length}</span>
+          </div>
+          <div class="space-y-2 max-h-80 overflow-y-auto">
+            ${items.length === 0 ? '<div class="text-slate-300 text-xs text-center py-4">Vazio</div>' :
+            items.map(v => `<div class="kanban-card" onclick="abrirStatusVaga('${v.id}')">
+              <div class="font-semibold text-sm">${escapeHtml(v.titulo)}</div>
+              <div class="text-xs text-slate-500">${escapeHtml(v.empresa) || ''}</div>
+              <div class="flex justify-between items-center mt-1">
+                <span class="text-xs text-slate-400">${escapeHtml(v.responsavel) || ''}</span>
+                <span class="text-xs text-slate-400">${v.qtd_vagas ? v.qtd_vagas+' vaga(s)' : ''}</span>
+              </div>
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function preencherSelectsVaga() {
+      const opcoes = vagasData.map(v => `<option value="${v.id}">${escapeHtml(v.titulo)} — ${escapeHtml(v.empresa)}</option>`).join('');
+      document.getElementById('candidatoVaga').innerHTML = opcoes || '<option value="">Nenhuma vaga cadastrada</option>';
+      const atual = document.getElementById('filtroVagaCandidatos').value;
+      document.getElementById('filtroVagaCandidatos').innerHTML = '<option value="">Todas as vagas</option>' + opcoes;
+      document.getElementById('filtroVagaCandidatos').value = atual;
+    }
+
+    function abrirNovaVaga() { toggleModal('modalNovaVaga', true); }
+
+    async function salvarVaga() {
+      const titulo = document.getElementById('vagaTitulo').value.trim();
+      const empresa = document.getElementById('vagaEmpresa').value.trim();
+      const responsavel = document.getElementById('vagaResponsavel').value.trim();
+      const qtd_vagas = document.getElementById('vagaQtdVagas').value || 1;
+      const descricao = document.getElementById('vagaDescricao').value.trim();
+      if (!titulo) { alert('Informe o título.'); return; }
+
+      const btn = document.getElementById('btnSalvarVaga');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'criar_vaga', titulo, empresa, responsavel, qtd_vagas, descricao, status: 'aberta' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else {
+          fecharModal('modalNovaVaga');
+          ['vagaTitulo','vagaEmpresa','vagaResponsavel','vagaDescricao'].forEach(id => document.getElementById(id).value = '');
+          document.getElementById('vagaQtdVagas').value = 1;
+          carregarVagas();
+        }
+      } catch (e) { alert('Erro: ' + e.message); }
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
+
+    function abrirStatusVaga(id) {
+      const vaga = vagasData.find(v => v.id === id);
+      if (!vaga) return;
+      vagaIdEmEdicao = id;
+      document.getElementById('vagaStatusTitulo').textContent = vaga.titulo;
+      document.getElementById('selectStatusVaga').innerHTML = Object.keys(STATUS_VAGA)
+        .map(st => `<option value="${st}" ${st === vaga.status ? 'selected' : ''}>${STATUS_VAGA[st]}</option>`).join('');
+      toggleModal('modalStatusVaga', true);
+    }
+
+    async function salvarStatusVaga() {
+      const status = document.getElementById('selectStatusVaga').value;
+      const btn = document.getElementById('btnSalvarStatusVaga');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'atualizar_vaga', id: vagaIdEmEdicao, status })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else { fecharModal('modalStatusVaga'); carregarVagas(); }
+      } catch (e) { alert('Erro: ' + e.message); }
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
+
+    async function excluirVaga() {
+      if (!vagaIdEmEdicao) return;
+      if (!confirm('Excluir esta vaga?')) return;
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'excluir_vaga', id: vagaIdEmEdicao })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else { fecharModal('modalStatusVaga'); carregarVagas(); }
+      } catch (e) { alert('Erro: ' + e.message); }
+    }
+
+    // ============================================================
+    // CANDIDATOS
+    // ============================================================
+    async function carregarCandidatos() {
+      const vagaId = document.getElementById('filtroVagaCandidatos')?.value || '';
+      try {
+        const resp = await fetch(CONFIG.API_URL + '?action=listar_candidatos' + (vagaId ? '&vagaId=' + encodeURIComponent(vagaId) : ''));
+        const data = await resp.json();
+        candidatosData = data.sucesso ? (data.candidatos || []) : [];
+        document.getElementById('totalCandidatos').textContent = candidatosData.length + ' candidatos';
+        renderKanbanCandidatos();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderKanbanCandidatos() {
+      const container = document.getElementById('kanbanCandidatos');
+      container.innerHTML = Object.keys(ETAPAS_CANDIDATO).map(et => {
+        const items = candidatosData.filter(c => (c.etapa || 'inscrito') === et);
+        return `<div class="kanban-column p-3">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-700 text-sm font-semibold">${ETAPAS_CANDIDATO[et]}</span>
+            <span class="text-slate-400 text-xs bg-white px-2 py-0.5 rounded-full border border-slate-200">${items.length}</span>
+          </div>
+          <div class="space-y-2 max-h-80 overflow-y-auto">
+            ${items.length === 0 ? '<div class="text-slate-300 text-xs text-center py-4">Vazio</div>' :
+            items.map(c => `<div class="kanban-card" onclick="abrirEtapaCandidato('${c.id}')">
+              <div class="font-semibold text-sm">${escapeHtml(c.nome)}</div>
+              <div class="text-xs text-slate-500">${escapeHtml(c.nomeVaga) || ''}</div>
+              ${c.data_entrevista ? `<div class="text-xs text-amber-600 mt-1"><i class="fas fa-calendar mr-1"></i>${new Date(c.data_entrevista).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</div>` : ''}
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function abrirNovoCandidato() { toggleModal('modalNovoCandidato', true); }
+
+    async function salvarCandidato() {
+      const vaga_id = document.getElementById('candidatoVaga').value;
+      const nome = document.getElementById('candidatoNome').value.trim();
+      const telefone = document.getElementById('candidatoTelefone').value.trim();
+      const email = document.getElementById('candidatoEmail').value.trim();
+      const cargo_desejado = document.getElementById('candidatoCargoDesejado').value.trim();
+      if (!nome || !vaga_id) { alert('Selecione vaga e informe nome.'); return; }
+
+      const btn = document.getElementById('btnSalvarCandidato');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'criar_candidato', vaga_id, nome, telefone, email, cargo_desejado, etapa: 'inscrito' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else {
+          fecharModal('modalNovoCandidato');
+          ['candidatoNome','candidatoTelefone','candidatoEmail','candidatoCargoDesejado'].forEach(id => document.getElementById(id).value = '');
+          carregarCandidatos();
+        }
+      } catch (e) { alert('Erro: ' + e.message); }
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
+
+    function abrirEtapaCandidato(id) {
+      const c = candidatosData.find(x => x.id === id);
+      if (!c) return;
+      candidatoIdEmEdicao = id;
+      document.getElementById('etapaCandidatoNome').textContent = c.nome;
+      document.getElementById('selectEtapaCandidato').innerHTML = Object.keys(ETAPAS_CANDIDATO)
+        .map(et => `<option value="${et}" ${et === c.etapa ? 'selected' : ''}>${ETAPAS_CANDIDATO[et]}</option>`).join('');
+      document.getElementById('dataEntrevistaCandidato').value = c.data_entrevista ? c.data_entrevista.slice(0,16) : '';
+      document.getElementById('entrevistadorCandidato').value = c.entrevistador || '';
+      document.getElementById('obsCandidato').value = c.observacoes || c.resultado || '';
+      toggleModal('modalEtapaCandidato', true);
+    }
+
+    async function salvarEtapaCandidato() {
+      const etapa = document.getElementById('selectEtapaCandidato').value;
+      const data_entrevista = document.getElementById('dataEntrevistaCandidato').value;
+      const entrevistador = document.getElementById('entrevistadorCandidato').value.trim();
+      const observacoes = document.getElementById('obsCandidato').value.trim();
+
+      const btn = document.getElementById('btnSalvarEtapa');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'atualizar_candidato', id: candidatoIdEmEdicao, etapa, data_entrevista, entrevistador, observacoes })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else {
+          fecharModal('modalEtapaCandidato');
+          carregarCandidatos();
+          // Se contratou → oferece gerar cobrança
+          if (etapa === 'contratado') {
+            const cand = candidatosData.find(x => x.id === candidatoIdEmEdicao);
+            if (cand && confirm('🎉 Candidato CONTRATADO! Deseja gerar uma cobrança no Financeiro?')) {
+              await gerarCobrancaDeVaga(cand.vagaId, cand.id);
+            }
+          }
+        }
+      } catch (e) { alert('Erro: ' + e.message); }
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
+
+    async function gerarCobrancaDeVaga(vaga_id, candidato_id) {
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'gerar_cobranca_vaga', vaga_id, candidato_id, usuario: 'CRM Web' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else {
+          alert('✅ Cobrança gerada! Ajuste valor e data na aba Financeiro.');
+          mudarAba('financeiro');
+          carregarFinanceiro();
+        }
+      } catch (e) { alert('Erro: ' + e.message); }
+    }
+
+    async function excluirCandidato() {
+      if (!candidatoIdEmEdicao) return;
+      if (!confirm('Excluir este candidato?')) return;
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'excluir_candidato', id: candidatoIdEmEdicao })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else { fecharModal('modalEtapaCandidato'); carregarCandidatos(); }
+      } catch (e) { alert('Erro: ' + e.message); }
+    }
+
+    // ============================================================
+    // FINANCEIRO
+    // ============================================================
+    async function carregarFinanceiro() {
+      try {
+        const resp = await fetch(CONFIG.API_URL + '?action=listar_financeiro');
+        const data = await resp.json();
+        financeiroData = data.sucesso ? (data.financeiro || []) : [];
+        renderFinanceiro();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderFinanceiro() {
+      const tipoFiltro = document.getElementById('filtroTipoFinanceiro').value;
+      const statusFiltro = document.getElementById('filtroStatusFinanceiro').value;
+      let items = financeiroData;
+      if (tipoFiltro) items = items.filter(i => i.tipo === tipoFiltro);
+      if (statusFiltro) items = items.filter(i => i.status === statusFiltro);
+
+      document.getElementById('totalFinanceiro').textContent = items.length + ' lançamentos';
+
+      const container = document.getElementById('tabelaFinanceiro');
+      if (!items.length) {
+        container.innerHTML = `<div class="text-center py-12 text-slate-400">
+          <i class="fas fa-wallet text-4xl mb-3 block opacity-50"></i>
+          <p class="text-sm">Nenhum lançamento encontrado</p>
+        </div>`;
+        return;
+      }
+
+      container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        ${items.map(item => {
+          const stColor = item.status === 'atrasado' ? 'border-red-400 bg-red-50'
+            : item.status === 'recebido' || item.status === 'pago' ? 'border-emerald-400 bg-emerald-50'
+            : 'border-amber-400 bg-amber-50';
+          const dtPrev = item.data_prevista ? new Date(item.data_prevista).toLocaleDateString('pt-BR') : '—';
+          const badge = item.status === 'atrasado' ? '🔴 Atrasado'
+            : item.status === 'recebido' ? '✅ Recebido'
+            : item.status === 'pago' ? '✅ Pago'
+            : item.status === 'cancelado' ? '⚪ Cancelado'
+            : '🟡 Pendente';
+          const tipoIcon = item.tipo === 'receita' ? '📥' : '📤';
+          return `<div class="card p-4 border-l-4 ${stColor}">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <div class="text-xs text-slate-500 uppercase font-semibold">${tipoIcon} ${item.tipo}</div>
+                <div class="text-xs text-slate-400">${CATEGORIAS_LABELS[item.categoria] || item.categoria}</div>
+              </div>
+              <span class="text-xs font-bold">${badge}</span>
+            </div>
+            <div class="text-sm font-medium text-slate-700 mb-1">${escapeHtml(item.descricao) || '—'}</div>
+            <div class="text-xs text-slate-500 mb-2">${escapeHtml(item.empresa) || ''}</div>
+            <div class="flex justify-between items-end">
+              <div>
+                <div class="text-xs text-slate-500">Vencimento</div>
+                <div class="text-sm font-bold ${item.status === 'atrasado' ? 'text-red-600' : 'text-slate-700'}">${dtPrev}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-slate-500">Valor</div>
+                <div class="text-lg font-extrabold ${item.tipo === 'receita' ? 'text-emerald-600' : 'text-amber-600'}">
+                  R$ ${item.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}
+                </div>
+              </div>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <button onclick="abrirEdicaoLancamento('${item.id}')" class="flex-1 text-xs bg-slate-100 hover:bg-slate-200 py-1.5 rounded font-semibold">
+                <i class="fas fa-pen"></i> Editar
+              </button>
+              ${item.tipo === 'receita' && item.status !== 'recebido' ? `
+                <button onclick="marcarLancamento('${item.id}', 'marcar_recebido')" class="flex-1 text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 py-1.5 rounded font-semibold">
+                  <i class="fas fa-check"></i> Recebi
+                </button>` : ''}
+              ${item.tipo === 'despesa' && item.status !== 'pago' ? `
+                <button onclick="marcarLancamento('${item.id}', 'marcar_pago')" class="flex-1 text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 py-1.5 rounded font-semibold">
+                  <i class="fas fa-check"></i> Paguei
+                </button>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    function abrirNovoLancamento() {
+      atualizarCategoriasLanc();
+      document.getElementById('lancDataPrevista').value = new Date().toISOString().slice(0,10);
+      toggleModal('modalNovoLancamento', true);
+    }
+
+    function atualizarCategoriasLanc() {
+      const tipo = document.getElementById('lancTipo').value;
+      const cats = tipo === 'receita' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
+      document.getElementById('lancCategoria').innerHTML = cats
+        .map(c => `<option value="${c}">${CATEGORIAS_LABELS[c] || c}</option>`).join('');
+    }
+
+    async function salvarLancamento() {
+      const tipo = document.getElementById('lancTipo').value;
+      const categoria = document.getElementById('lancCategoria').value;
+      const descricao = document.getElementById('lancDescricao').value.trim();
+      const valor = parseFloat(document.getElementById('lancValor').value) || 0;
+      const data_prevista = document.getElementById('lancDataPrevista').value;
+      const empresa = document.getElementById('lancEmpresa').value.trim();
+      const observacoes = document.getElementById('lancObs').value.trim();
+
+      if (!valor) { alert('Informe o valor.'); return; }
+
+      const btn = document.getElementById('btnSalvarLanc');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'criar_lancamento', tipo, categoria, descricao, valor,
+            data_prevista, empresa, observacoes, status: 'pendente', usuario: 'CRM Web' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else {
+          fecharModal('modalNovoLancamento');
+          ['lancDescricao','lancValor','lancEmpresa','lancObs'].forEach(id => document.getElementById(id).value = '');
+          carregarFinanceiro();
+          carregarDados(); // atualiza KPIs
+        }
+      } catch (e) { alert('Erro: ' + e.message); }
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
+
+    function abrirEdicaoLancamento(id) {
+      const item = financeiroData.find(f => f.id === id);
+      if (!item) return;
+      lancamentoIdEmEdicao = id;
+      document.getElementById('editLancDescricao').value = item.descricao || '';
+      document.getElementById('editLancValor').value = item.valor || 0;
+      document.getElementById('editLancDataPrevista').value = item.data_prevista ? item.data_prevista.slice(0,10) : '';
+      document.getElementById('editLancDataReal').value = item.data_real ? item.data_real.slice(0,10) : '';
+      document.getElementById('editLancStatus').value = item.status || 'pendente';
+      document.getElementById('editLancObs').value = item.observacoes || '';
+      toggleModal('modalEditarLancamento', true);
+    }
+
+    async function salvarEdicaoLancamento() {
+      const descricao = document.getElementById('editLancDescricao').value.trim();
+      const valor = parseFloat(document.getElementById('editLancValor').value) || 0;
+      const data_prevista = document.getElementById('editLancDataPrevista').value;
+      const data_real = document.getElementById('editLancDataReal').value;
+      const status = document.getElementById('editLancStatus').value;
+      const observacoes = document.getElementById('editLancObs').value.trim();
+
+      const btn = document.getElementById('btnSalvarEditLanc');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'atualizar_lancamento', id: lancamentoIdEmEdicao,
+            descricao, valor, data_prevista, data_real, status, observacoes })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else { fecharModal('modalEditarLancamento'); carregarFinanceiro(); carregarDados(); }
+      } catch (e) { alert('Erro: ' + e.message); }
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
+
+    async function marcarLancamento(id, acao) {
+      const dataReal = new Date().toISOString().slice(0,10);
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: acao, id, data_real: dataReal, usuario: 'CRM Web' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else { carregarFinanceiro(); carregarDados(); }
+      } catch (e) { alert('Erro: ' + e.message); }
+    }
+
+    async function excluirLancamento() {
+      if (!lancamentoIdEmEdicao) return;
+      if (!confirm('Excluir este lançamento?')) return;
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'excluir_lancamento', id: lancamentoIdEmEdicao })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) alert('Erro: ' + data.erro);
+        else { fecharModal('modalEditarLancamento'); carregarFinanceiro(); carregarDados(); }
+      } catch (e) { alert('Erro: ' + e.message); }
+    }
+
+    // ============================================================
+    // CALENDÁRIO
+    // ============================================================
+    async function carregarCalendario() {
+      try {
+        const resp = await fetch(CONFIG.API_URL + '?action=calendario_entrevistas&dias=7');
+        const data = await resp.json();
+        const eventos = data.sucesso ? (data.eventos || []) : [];
+        document.getElementById('totalEventos').textContent = eventos.length + ' eventos';
+        const container = document.getElementById('calendarioLista');
+
+        if (!eventos.length) {
+          container.innerHTML = `<div class="text-center py-12 text-slate-400">
+            <i class="fas fa-calendar-check text-4xl mb-3 block opacity-50"></i>
+            <p class="text-sm">Sem entrevistas nos próximos 7 dias</p>
+          </div>`;
+          return;
+        }
+
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        container.innerHTML = eventos.map(ev => {
+          const dt = new Date(ev.data_entrevista);
+          const dias = Math.ceil((dt - hoje) / 86400000);
+          const isHoje = dt.toDateString() === new Date().toDateString();
+          const isAtrasado = ev.status === 'atrasada';
+
+          const badge = isAtrasado ? '<span class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full font-bold">🔴 ATRASADA</span>'
+            : isHoje ? '<span class="bg-amber-100 text-amber-700 text-xs px-3 py-1 rounded-full font-bold">🟡 HOJE</span>'
+            : dias === 1 ? '<span class="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full font-bold">⏰ Amanhã</span>'
+            : '<span class="bg-emerald-100 text-emerald-700 text-xs px-3 py-1 rounded-full font-bold">🟢 Em ' + dias + 'd</span>';
+
+          return `<div class="card p-4 mb-3 border-l-4 ${isAtrasado ? 'border-red-400' : isHoje ? 'border-amber-400' : 'border-emerald-400'}">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xl">${isAtrasado ? '🔴' : isHoje ? '🟡' : '🟢'}</span>
+                  <div>
+                    <div class="font-bold text-slate-900">${escapeHtml(ev.candidato)}</div>
+                    <div class="text-xs text-slate-500">${escapeHtml(ev.cargo) || ''} ${ev.empresa ? '· ' + escapeHtml(ev.empresa) : ''}</div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                  <div><i class="fas fa-clock text-slate-400 mr-1"></i><strong>${dt.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</strong></div>
+                  <div><i class="fas fa-user text-slate-400 mr-1"></i>${escapeHtml(ev.entrevistador)}</div>
+                  <div><i class="fas fa-briefcase text-slate-400 mr-1"></i>${escapeHtml(ev.vaga) || '—'}</div>
+                  <div><i class="fas fa-phone text-slate-400 mr-1"></i>${escapeHtml(ev.telefone) || '—'}</div>
+                </div>
+              </div>
+              <div class="ml-3">${badge}</div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    // ============================================================
+    // EXPORTAR CSV
+    // ============================================================
+    function exportarCSV() {
+      if (!leadsData?.length) { alert('Nenhum lead para exportar.'); return; }
+      const headers = ['Nome','Email','Telefone','Empresa','Interesse','Origem','Status','Valor Estimado','Notas','Dias'];
+      const rows = leadsData.map(l => [
+        l.nome||'', l.email||'', l.telefone||'', l.empresa||'',
+        l.interesse||'', l.origem||'', STATUS_LABELS[(l.status||'novo').toLowerCase()]||l.status,
+        l.valor_estimado||0, (l.notas||'').replace(/[\r\n]+/g,' '), l.dias||0
+      ]);
+      const csv = [headers.join(';'), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';'))].join('\n');
+      const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'leads_gdj_vertex_' + new Date().toISOString().slice(0,10) + '.csv';
+      link.click();
+    }
+
+    // ============================================================
+    // UTILS
+    // ============================================================
+    function escapeHtml(texto) {
+      if (!texto) return '';
+      const div = document.createElement('div');
+      div.textContent = texto;
+      return div.innerHTML;
+    }
+
+    function atualizarTimestamp() {
+      document.getElementById('ultimaAtualizacao').textContent =
+        new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    }
+
+    function toggleModal(id, mostrar) {
+      document.getElementById(id).classList.toggle('hidden', !mostrar);
+      document.getElementById(id).classList.toggle('flex', mostrar);
+    }
+    function fecharModal(id) { toggleModal(id, false); }
+
+    // ============================================================
+    // INICIAR
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarTudo();
+      verificarStatusWhatsApp();
+    });
+
+    setInterval(() => {
+      carregarDados();
+      if (document.getElementById('tabFinanceiro').classList.contains('active')) carregarFinanceiro();
+    }, CONFIG.AUTO_REFRESH);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        ['modalNovoLead','modalStatus','modalChat','modalNovaVaga','modalStatusVaga',
+         'modalNovoCandidato','modalEtapaCandidato','modalNovoLancamento','modalEditarLancamento']
+          .forEach(id => fecharModal(id));
+      }
+    });
+
+    ['modalNovoLead','modalStatus','modalChat','modalNovaVaga','modalStatusVaga',
+     'modalNovoCandidato','modalEtapaCandidato','modalNovoLancamento','modalEditarLancamento']
+      .forEach(idModal => {
+        document.getElementById(idModal).addEventListener('click', function(e) {
+          if (e.target === this) fecharModal(idModal);
+        });
+      });
+
+    document.getElementById('chatInputMensagem').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') enviarMensagemChat();
+    });
+  </script>
+</body>
+</html>
