@@ -2232,6 +2232,195 @@
     document.getElementById('chatInputMensagem').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') enviarMensagemChat();
     });
+
+    // ============================================================
+    // DASHBOARD EXECUTIVO (BLOCO 4 — lógica que faltava)
+    // ============================================================
+    let chartBarrasInstance = null;
+    let chartPizzaInstance = null;
+
+    async function carregarDashboard(forcar = false) {
+      if (forcar) {
+        await Promise.all([carregarDados(false), carregarVagas(), carregarCandidatos(), carregarFinanceiro()]);
+      }
+
+      document.getElementById('dashboardGeradoEm').textContent =
+        'Gerado em ' + new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+      renderDashboardKPIs();
+      renderDashboardGraficos();
+      renderDashboardTopEmpresas();
+      renderDashboardProximasReunioes();
+      renderDashboardLeadsQuentes();
+      renderDashboardAlertas();
+      renderDashboardCandidatosEtapa();
+    }
+
+    function fmtMoeda(v) {
+      return 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    }
+
+    function renderDashboardKPIs() {
+      const clientes = leadsData.filter(l => (l.status || 'novo').toLowerCase() === 'cliente');
+      const receitaTotal = financeiroData
+        .filter(f => f.tipo === 'receita' && (f.status === 'recebido' || f.status === 'pago'))
+        .reduce((s, f) => s + (Number(f.valor) || 0), 0);
+      const ticketMedio = clientes.length > 0 ? receitaTotal / clientes.length : 0;
+      const taxaConversao = leadsData.length > 0 ? (clientes.length / leadsData.length) * 100 : 0;
+      const vagasFechadas = vagasData.filter(v => v.status === 'fechada');
+      const leadsAtivos = leadsData.filter(l => !['cliente', 'perdido'].includes((l.status || 'novo').toLowerCase()));
+
+      const financeiroAtrasado = financeiroData.filter(f => f.status === 'atrasado');
+      const leadsParados = leadsData.filter(l => {
+        const st = (l.status || 'novo').toLowerCase();
+        return !['cliente', 'perdido'].includes(st) && (l.dias ?? 0) > 10;
+      });
+      const totalAlertas = financeiroAtrasado.length + leadsParados.length;
+
+      document.getElementById('dashReceitaTotal').textContent = fmtMoeda(receitaTotal);
+      document.getElementById('dashClientesInfo').textContent = clientes.length + ' cliente(s) fechado(s)';
+      document.getElementById('dashTicketMedio').textContent = fmtMoeda(ticketMedio);
+      document.getElementById('dashTaxaConversao').textContent = Math.round(taxaConversao) + '%';
+      document.getElementById('dashConversaoInfo').textContent = clientes.length + ' de ' + leadsData.length + ' leads';
+      document.getElementById('dashVagasFechadas').textContent = vagasFechadas.length;
+      document.getElementById('dashVagasInfo').textContent = vagasData.length + ' vaga(s) no total';
+      document.getElementById('dashLeadsAtivos').textContent = leadsAtivos.length;
+      document.getElementById('dashAlertas').textContent = totalAlertas;
+    }
+
+    function renderDashboardGraficos() {
+      // --- Receitas x Despesas nos últimos 6 meses ---
+      const meses = [];
+      const hoje = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+        meses.push({ label: d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }), ano: d.getFullYear(), mes: d.getMonth() });
+      }
+      const receitasPorMes = meses.map(m =>
+        financeiroData
+          .filter(f => f.tipo === 'receita' && f.data_real)
+          .filter(f => { const d = new Date(f.data_real); return d.getFullYear() === m.ano && d.getMonth() === m.mes; })
+          .reduce((s, f) => s + (Number(f.valor) || 0), 0)
+      );
+      const despesasPorMes = meses.map(m =>
+        financeiroData
+          .filter(f => f.tipo === 'despesa' && f.data_real)
+          .filter(f => { const d = new Date(f.data_real); return d.getFullYear() === m.ano && d.getMonth() === m.mes; })
+          .reduce((s, f) => s + (Number(f.valor) || 0), 0)
+      );
+
+      const ctxBarras = document.getElementById('chartBarras');
+      if (chartBarrasInstance) chartBarrasInstance.destroy();
+      chartBarrasInstance = new Chart(ctxBarras, {
+        type: 'bar',
+        data: {
+          labels: meses.map(m => m.label),
+          datasets: [
+            { label: 'Receitas', data: receitasPorMes, backgroundColor: '#10b981', borderRadius: 6 },
+            { label: 'Despesas', data: despesasPorMes, backgroundColor: '#ef4444', borderRadius: 6 },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } } },
+        },
+      });
+
+      // --- Funil de leads (pizza) ---
+      const contagemPorStatus = statusValidos.map(st => leadsData.filter(l => (l.status || 'novo').toLowerCase() === st).length);
+      const ctxPizza = document.getElementById('chartPizza');
+      if (chartPizzaInstance) chartPizzaInstance.destroy();
+      chartPizzaInstance = new Chart(ctxPizza, {
+        type: 'doughnut',
+        data: {
+          labels: statusValidos.map(st => STATUS_LABELS[st] || st),
+          datasets: [{
+            data: contagemPorStatus,
+            backgroundColor: statusValidos.map(st => KANBAN_BORDERS[st] || '#94a3b8'),
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+        },
+      });
+    }
+
+    function renderDashboardTopEmpresas() {
+      const porEmpresa = {};
+      leadsData.forEach(l => {
+        if (!l.empresa) return;
+        const chave = l.empresa.trim();
+        if (!porEmpresa[chave]) porEmpresa[chave] = 0;
+        porEmpresa[chave] += Number(l.valor_estimado) || Number(l.valor_contrato) || 0;
+      });
+      const top5 = Object.entries(porEmpresa).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const container = document.getElementById('dashTopEmpresas');
+      if (!top5.length) { container.innerHTML = '<p class="text-slate-400 text-sm">Sem dados suficientes</p>'; return; }
+      container.innerHTML = top5.map(([empresa, valor], i) => `
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-slate-700 truncate"><strong class="text-amber-500">#${i + 1}</strong> ${escapeHtml(empresa)}</span>
+          <span class="font-bold text-emerald-600">${fmtMoeda(valor)}</span>
+        </div>`).join('');
+    }
+
+    function renderDashboardProximasReunioes() {
+      const agora = new Date();
+      const proximas = leadsData
+        .filter(l => l.data_reuniao && new Date(l.data_reuniao) > agora)
+        .sort((a, b) => new Date(a.data_reuniao) - new Date(b.data_reuniao))
+        .slice(0, 5);
+      const container = document.getElementById('dashProximasReunioes');
+      if (!proximas.length) { container.innerHTML = '<p class="text-slate-400 text-sm">Nenhuma reunião agendada</p>'; return; }
+      container.innerHTML = proximas.map(l => `
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-slate-700 truncate">${escapeHtml(l.titulo_reuniao || 'Reunião')} — ${escapeHtml(l.nome)}</span>
+          <span class="text-orange-600 text-xs font-semibold">${new Date(l.data_reuniao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+        </div>`).join('');
+    }
+
+    function renderDashboardLeadsQuentes() {
+      const quentes = leadsData
+        .filter(l => !['cliente', 'perdido'].includes((l.status || 'novo').toLowerCase()) && (l.dias ?? 99) <= 3)
+        .sort((a, b) => (a.dias ?? 0) - (b.dias ?? 0))
+        .slice(0, 5);
+      const container = document.getElementById('dashLeadsQuentes');
+      if (!quentes.length) { container.innerHTML = '<p class="text-slate-400 text-sm">Nenhum lead quente no momento</p>'; return; }
+      container.innerHTML = quentes.map(l => `
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-slate-700 truncate">🔥 ${escapeHtml(l.nome)} ${l.empresa ? '· ' + escapeHtml(l.empresa) : ''}</span>
+          <span class="text-slate-400 text-xs">${l.dias ?? 0}d</span>
+        </div>`).join('');
+    }
+
+    function renderDashboardAlertas() {
+      const financeiroAtrasado = financeiroData.filter(f => f.status === 'atrasado');
+      const leadsParados = leadsData.filter(l => {
+        const st = (l.status || 'novo').toLowerCase();
+        return !['cliente', 'perdido'].includes(st) && (l.dias ?? 0) > 10;
+      });
+      const container = document.getElementById('dashAlertasLista');
+      const itens = [
+        ...financeiroAtrasado.map(f => `💸 Lançamento atrasado: ${escapeHtml(f.descricao) || CATEGORIAS_LABELS[f.categoria] || f.categoria} (${fmtMoeda(f.valor)})`),
+        ...leadsParados.map(l => `⏳ Lead parado há ${l.dias}d: ${escapeHtml(l.nome)} ${l.empresa ? '· ' + escapeHtml(l.empresa) : ''}`),
+      ];
+      if (!itens.length) { container.innerHTML = '<p class="text-slate-400 text-sm">Nada precisando de atenção agora 🎉</p>'; return; }
+      container.innerHTML = itens.slice(0, 8).map(txt => `<div class="text-sm text-slate-700">${txt}</div>`).join('');
+    }
+
+    function renderDashboardCandidatosEtapa() {
+      const container = document.getElementById('dashCandidatosEtapa');
+      container.innerHTML = Object.keys(ETAPAS_CANDIDATO).map(et => {
+        const qtd = candidatosData.filter(c => (c.etapa || 'inscrito') === et).length;
+        return `<div class="text-center p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <p class="text-lg font-extrabold text-slate-800">${qtd}</p>
+          <p class="text-[0.6rem] text-slate-500 uppercase tracking-wide">${ETAPAS_CANDIDATO[et]}</p>
+        </div>`;
+      }).join('');
+    }
   </script>
   <div id="toastContainer" class="fixed bottom-6 right-6 z-[100] space-y-2"></div>
 </body>
