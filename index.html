@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <style>
     :root {
@@ -247,6 +248,24 @@
 </head>
 <body>
 
+  <!-- LOGIN -->
+  <div id="telaLogin" class="fixed inset-0 z-[60] flex items-center justify-center" style="background:#0f172a;">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+      <div class="text-center mb-6">
+        <h1 class="text-xl font-bold font-serif text-slate-900">GDJ VERTEX</h1>
+        <p class="text-xs text-slate-400 uppercase tracking-wider">CRM Executivo — acesso restrito</p>
+      </div>
+      <div class="space-y-3">
+        <input type="email" id="loginEmail" class="input-field" placeholder="E-mail" autocomplete="username" />
+        <input type="password" id="loginSenha" class="input-field" placeholder="Senha" autocomplete="current-password" />
+      </div>
+      <button onclick="fazerLogin()" id="btnLogin" class="btn-primary w-full mt-4">Entrar</button>
+      <p id="loginErro" class="text-red-500 text-xs text-center mt-3 hidden"></p>
+    </div>
+  </div>
+
+  <div id="appContent" class="hidden">
+
   <!-- LOADING -->
   <div id="loading" class="loading fixed inset-0 z-50 items-center justify-center modal-overlay">
     <div class="bg-white p-8 rounded-2xl text-center shadow-xl">
@@ -295,6 +314,9 @@
           <span class="text-xs text-slate-400 hidden lg:block" id="ultimaAtualizacao">--</span>
           <button onclick="carregarTudo()" class="btn-outline !p-2 !rounded-full hover:rotate-45 transition-all" title="Atualizar">
             <i class="fas fa-sync-alt"></i>
+          </button>
+          <button onclick="fazerLogout()" class="btn-outline !p-2 !rounded-full text-red-500 border-red-200 hover:bg-red-50" title="Sair">
+            <i class="fas fa-sign-out-alt"></i>
           </button>
         </div>
 
@@ -967,6 +989,62 @@
       API_URL: "https://script.google.com/macros/s/AKfycbzh0RzG1TmcFD-op3BK6WLGRPnUqN7hTdFnPWtD_62nvyV7yq3NB29wssCntDrxv-Dr/exec",
       AUTO_REFRESH: 60000
     };
+
+    // ============================================================
+    // AUTENTICAÇÃO (Supabase Auth — usuário master)
+    // ============================================================
+    const SUPABASE_URL = "https://ieuazfywianwzdfgzgtu.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlldWF6Znl3aWFud3pkZmd6Z3R1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzMTI0ODYsImV4cCI6MjEwMzg4ODQ4Nn0.O5jc4Rd_IFjQtnFrN5E5EL_qrSCCLZ7HoiHp52dMCTg";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function verificarSessao() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        document.getElementById('telaLogin').classList.add('hidden');
+        document.getElementById('appContent').classList.remove('hidden');
+        carregarTudo();
+        verificarStatusWhatsApp();
+      } else {
+        document.getElementById('telaLogin').classList.remove('hidden');
+        document.getElementById('appContent').classList.add('hidden');
+      }
+    }
+
+    async function fazerLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const senha = document.getElementById('loginSenha').value;
+      const btn = document.getElementById('btnLogin');
+      const erro = document.getElementById('loginErro');
+      erro.classList.add('hidden');
+
+      if (!email || !senha) {
+        erro.textContent = 'Preencha e-mail e senha.';
+        erro.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Entrando...';
+      const { error } = await sb.auth.signInWithPassword({ email, password: senha });
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
+
+      if (error) {
+        erro.textContent = 'E-mail ou senha inválidos.';
+        erro.classList.remove('hidden');
+        return;
+      }
+      verificarSessao();
+    }
+
+    async function fazerLogout() {
+      await sb.auth.signOut();
+      verificarSessao();
+    }
+
+    document.getElementById('loginSenha').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') fazerLogin();
+    });
 
     const STATUS_LABELS = {
       novo: "Novo", contatado: "Contatado", qualificado: "Qualificado",
@@ -2195,8 +2273,7 @@
     // INICIAR
     // ============================================================
     document.addEventListener('DOMContentLoaded', () => {
-      carregarTudo();
-      verificarStatusWhatsApp();
+      verificarSessao();
     });
 
     let refreshPausado = false;
@@ -2422,6 +2499,8 @@
       }).join('');
     }
   </script>
+  </div><!-- /appContent -->
+
   <div id="toastContainer" class="fixed bottom-6 right-6 z-[100] space-y-2"></div>
 </body>
 </html>
