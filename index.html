@@ -727,7 +727,7 @@
 
 
     <div class="text-center text-slate-300 text-[0.6rem] mt-6 tracking-wider">
-      GDJ VERTEX © 2026 • CRM & Painel de Gestão • v7.0
+      GDJ VERTEX © 2026 • CRM & Painel de Gestão • v7.2
     </div>
 
   </main>  <!-- ================= MODAL: NOVO LEAD ================= -->
@@ -1095,7 +1095,7 @@
     // NAVEGAÇÃO ABAS
     // ============================================================
     function mudarAba(aba) {
-      ['leads','funil','vagas','candidatos','financeiro','calendario'].forEach(a => {
+      ['leads','funil','vagas','candidatos','financeiro','calendario','dashboard'].forEach(a => {
         const tab = document.getElementById('tab' + capitalizar(a));
         const btn = document.getElementById('tabBtn' + capitalizar(a));
         if (tab) tab.classList.toggle('active', a === aba);
@@ -1104,6 +1104,7 @@
       if (aba === 'funil') renderKanbanFunil();
       if (aba === 'financeiro') carregarFinanceiro();
       if (aba === 'calendario') carregarCalendario();
+      if (aba === 'dashboard') carregarDashboard();
     }
     function capitalizar(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
