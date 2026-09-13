@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDJ · Candidate-se</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --verde-profundo: #142C23;
+            --verde-base: #1B3B2F;
+            --verde-musgo: #3C5A4B;
+            --verde-suave: #EDF3F0;
+            --dourado-metalico: #C9A227;
+            --dourado-claro: #F4ECCF;
+            --dourado-glow: rgba(201, 162, 39, 0.2);
+            --vermelho-destaque: #A83226;
+            --branco-puro: #FFFFFF;
+            --off-white: #FAF9F6;
+            --cinza-borda: rgba(27, 59, 47, 0.08);
+            --cinza-texto: #5A6D63;
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --shadow-card: 0 10px 30px rgba(20, 44, 35, 0.07);
+            --shadow-hover: 0 16px 40px rgba(20, 44, 35, 0.12);
+            --transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body {
+            background: #0E1713;
+            font-family: var(--font-main);
+            color: var(--verde-profundo);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .page-wrapper {
+            width: 100%;
+            max-width: 720px;
+            background: var(--off-white);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(201, 162, 39, 0.25);
+            overflow: hidden;
+            position: relative;
+        }
+        .header-brand {
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--cinza-borda);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+        }
+        .brand-block { display: flex; align-items: center; gap: 12px; }
+        .brand-block img { height: 34px; object-fit: contain; }
+        .brand-divider { width: 1px; height: 18px; background: rgba(201, 162, 39, 0.4); }
+        .brand-text {
+            font-size: 0.7rem; font-weight: 700; color: var(--verde-musgo);
+            letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .partner-pill-group {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--verde-suave); padding: 4px 14px;
+            border-radius: 40px; border: 1px solid rgba(27, 59, 47, 0.08);
+        }
+        .partner-pill-group span { font-size: 0.68rem; color: var(--verde-musgo); font-weight: 600; }
+        .partner-pill-group img { height: 15px; filter: grayscale(1); opacity: 0.85; }
+        .main-content { padding: 32px 28px 40px; }
+        .vaga-card {
+            background: var(--branco-puro);
+            border-radius: var(--radius-md);
+            padding: 22px 24px;
+            box-shadow: var(--shadow-card);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .vaga-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--dourado-metalico), #E8D9A0);
+        }
+        .vaga-kicker {
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--dourado-metalico); margin-bottom: 6px;
+        }
+        .vaga-titulo {
+            font-family: var(--font-serif); font-size: 1.5rem; font-weight: 700;
+            color: var(--verde-profundo); line-height: 1.2; margin-bottom: 4px;
+        }
+        .vaga-empresa { font-size: 0.85rem; color: var(--cinza-texto); font-weight: 500; }
+        .vaga-meta { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+        .vaga-meta span { font-size: 0.75rem; color: var(--verde-musgo); font-weight: 600; }
+        .vaga-meta i { color: var(--dourado-metalico); margin-right: 4px; }
+        .form-section-title {
+            font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--verde-musgo);
+            margin-bottom: 14px; padding-bottom: 8px;
+            border-bottom: 1px solid var(--cinza-borda);
+        }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-row { margin-bottom: 0; }
+        .form-row label {
+            display: block; font-size: 0.72rem; font-weight: 600;
+            color: var(--verde-musgo); margin-bottom: 4px; text-transform: uppercase;
+        }
+        .form-row label .req { color: var(--vermelho-destaque); }
+        .form-row input, .form-row select, .form-row textarea {
+            width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);
+            border: 1px solid rgba(27, 59, 47, 0.15);
+            font-family: var(--font-main); font-size: 0.85rem;
+            outline: none; transition: var(--transition);
+            background: var(--branco-puro); color: var(--verde-profundo);
+        }
+        .form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+            border-color: var(--dourado-metalico);
+            box-shadow: 0 0 0 3px var(--dourado-glow);
+        }
+        .form-row input[type="file"] {
+            padding: 8px; font-size: 0.8rem; cursor: pointer;
+        }
+        .btn-submit {
+            width: 100%; padding: 14px 24px; border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--dourado-metalico), #A88319);
+            color: var(--branco-puro); font-family: var(--font-main);
+            font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 6px 20px rgba(201, 162, 39, 0.3);
+            margin-top: 24px; display: flex; align-items: center;
+            justify-content: center; gap: 8px;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(201, 162, 39, 0.45);
+        }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .alert {
+            padding: 12px 16px; border-radius: var(--radius-sm);
+            font-size: 0.8rem; margin-bottom: 16px; display: none;
+        }
+        .alert-error { background: #FDF2F1; border: 1px solid #F5C6C0; color: var(--vermelho-destaque); }
+        .alert-success { background: #EDF7ED; border: 1px solid #B8E0B8; color: #1B5E20; }
+        .success-screen {
+            display: none; text-align: center; padding: 48px 24px;
+        }
+        .success-screen .icon-circle {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px; font-size: 2rem; color: white;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+        .success-screen h2 {
+            font-family: var(--font-serif); font-size: 1.6rem;
+            color: var(--verde-profundo); margin-bottom: 8px;
+        }
+        .success-screen p { font-size: 0.9rem; color: var(--cinza-texto); margin-bottom: 24px; }
+        .btn-whatsapp {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 14px 28px; border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white; text-decoration: none; font-weight: 700;
+            font-size: 0.95rem; transition: var(--transition);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
+        }
+        .btn-whatsapp:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(37, 211, 102, 0.45); }
+        .footer-note {
+            text-align: center; padding: 16px; font-size: 0.65rem;
+            color: #94a3b8; letter-spacing: 0.5px;
+        }
+        @media (max-width: 560px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .main-content { padding: 20px 16px 28px; }
+            .vaga-titulo { font-size: 1.25rem; }
+            .header-brand { padding: 12px 16px; }
+            .brand-text { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+    <header class="header-brand">
+        <div class="brand-block">
+            <img src="https://github.com/lin-cmk/gdj-rh-consultoria/blob/8ca7f037377ea504641828128c54ef8acdb44169/public/images/design-1.png?raw=true" alt="GDJ">
+            <div class="brand-divider"></div>
+            <span class="brand-text">Gestão Estratégica de RH & DP</span>
+        </div>
+        <div class="partner-pill-group">
+            <span>Ecossistema:</span>
+            <img src="https://github.com/lin-cmk/gdj-rh-consultoria/blob/main/public/images/logo_sistine_salesguardian.png?raw=true" alt="Sistine">
+            <img src="https://github.com/lin-cmk/gdj-rh-consultoria/blob/main/public/images/logo-vex.png?raw=true" alt="Vex">
+        </div>
+    </header>
+
+    <div class="main-content" id="formContainer">
+        <!-- Card da Vaga (preenchido via JS) -->
+        <div class="vaga-card" id="vagaCard">
+            <div class="vaga-kicker"><i class="fas fa-briefcase"></i> Vaga em Destaque</div>
+            <h1 class="vaga-titulo" id="vagaTitulo">Carregando vaga...</h1>
+            <p class="vaga-empresa" id="vagaEmpresa"></p>
+            <div class="vaga-meta" id="vagaMeta"></div>
+        </div>
+
+        <div class="alert alert-error" id="alertErro"></div>
+
+        <form id="formCandidatura" novalidate>
+            <div class="form-section-title"><i class="fas fa-user"></i> Dados Pessoais</div>
+            <div class="form-grid">
+                <div class="form-row full">
+                    <label>Nome Completo <span class="req">*</span></label>
+                    <input type="text" id="nome" required placeholder="Seu nome completo">
+                </div>
+                <div class="form-row">
+                    <label>Telefone / WhatsApp <span class="req">*</span></label>
+                    <input type="tel" id="telefone" required placeholder="(11) 99999-9999">
+                </div>
+                <div class="form-row">
+                    <label>E-mail <span class="req">*</span></label>
+                    <input type="email" id="email" required placeholder="seu@email.com">
+                </div>
+                <div class="form-row">
+                    <label>Data de Nascimento</label>
+                    <input type="date" id="dataNascimento">
+                </div>
+                <div class="form-row">
+                    <label>Cidade</label>
+                    <input type="text" id="cidade" placeholder="Ex: São Paulo">
+                </div>
+                <div class="form-row">
+                    <label>Bairro</label>
+                    <input type="text" id="bairro" placeholder="Ex: Vila Mariana">
+                </div>
+                <div class="form-row">
+                    <label>Estado</label>
+                    <select id="estado">
+                        <option value="">Selecione</option>
+                        <option value="AC">Acre</option>
+                        <option value="AL">Alagoas</option>
+                        <option value="AP">Amapá</option>
+                        <option value="AM">Amazonas</option>
+                        <option value="BA">Bahia</option>
+                        <option value="CE">Ceará</option>
+                        <option value="DF">Distrito Federal</option>
+                        <option value="ES">Espírito Santo</option>
+                        <option value="GO">Goiás</option>
+                        <option value="MA">Maranhão</option>
+                        <option value="MT">Mato Grosso</option>
+                        <option value="MS">Mato Grosso do Sul</option>
+                        <option value="MG">Minas Gerais</option>
+                        <option value="PA">Pará</option>
+                        <option value="PB">Paraíba</option>
+                        <option value="PR">Paraná</option>
+                        <option value="PE">Pernambuco</option>
+                        <option value="PI">Piauí</option>
+                        <option value="RJ">Rio de Janeiro</option>
+                        <option value="RN">Rio Grande do Norte</option>
+                        <option value="RS">Rio Grande do Sul</option>
+                        <option value="RO">Rondônia</option>
+                        <option value="RR">Roraima</option>
+                        <option value="SC">Santa Catarina</option>
+                        <option value="SP" selected>São Paulo</option>
+                        <option value="SE">Sergipe</option>
+                        <option value="TO">Tocantins</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section-title" style="margin-top:24px;"><i class="fas fa-graduation-cap"></i> Perfil Profissional</div>
+            <div class="form-grid">
+                <div class="form-row">
+                    <label>Cargo Pretendido</label>
+                    <input type="text" id="cargoPretendido" placeholder="Ex: Analista de RH">
+                </div>
+                <div class="form-row">
+                    <label>Grau de Escolaridade</label>
+                    <select id="grauEscolaridade">
+                        <option value="">Selecione</option>
+                        <option value="Fundamental">Ensino Fundamental</option>
+                        <option value="Medio">Ensino Médio</option>
+                        <option value="Tecnico">Ensino Técnico</option>
+                        <option value="Superior Incompleto">Superior Incompleto</option>
+                        <option value="Superior Completo">Superior Completo</option>
+                        <option value="Pos-graduacao">Pós-graduação</option>
+                        <option value="Mestrado">Mestrado</option>
+                        <option value="Doutorado">Doutorado</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Tem Experiência?</label>
+                    <select id="temExperiencia">
+                        <option value="nao">Não</option>
+                        <option value="sim">Sim</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Quantos anos?</label>
+                    <input type="number" id="anosExperiencia" min="0" max="60" placeholder="Ex: 5">
+                </div>
+                <div class="form-row">
+                    <label>Está empregado atualmente?</label>
+                    <select id="estaEmpregado">
+                        <option value="nao">Não</option>
+                        <option value="sim">Sim</option>
+                    </select>
+                </div>
+                <div class="form-row full">
+                    <label>Currículo (PDF) <span class="req">*</span></label>
+                    <input type="file" id="curriculo" accept=".pdf" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="btnEnviar">
+                <i class="fas fa-paper-plane"></i> Enviar Candidatura
+            </button>
+        </form>
+    </div>
+
+    <!-- Tela de Sucesso -->
+    <div class="success-screen" id="successScreen">
+        <div class="icon-circle"><i class="fas fa-check"></i></div>
+        <h2>Candidatura enviada!</h2>
+        <p id="successMsg">Recebemos seus dados com sucesso. Em breve nossa equipe entrará em contato.</p>
+        <a href="#" id="btnWhatsapp" class="btn-whatsapp" target="_blank">
+            <i class="fab fa-whatsapp"></i> Falar no WhatsApp agora
+        </a>
+    </div>
+
+    <div class="footer-note">GDJ VERTEX © 2026 · CRM & Gestão de Candidaturas</div>
+</div>
+
+<script>
+    // ============================================================
+    // CONFIGURAÇÕES
+    // ============================================================
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzh0RzG1TmcFD-op3BK6WLGRPnUqN7hTdFnPWtD_62nvyV7yq3NB29wssCntDrxv-Dr/exec';
+    const WEBHOOK_N8N = 'https://SEU-N8N.exemplo.com/webhook/candidato'; // SUBSTITUIR DEPOIS
+    const WHATSAPP_NUMERO = '5511966810215';
+
+    // Lê parâmetros da URL
+    const params = new URLSearchParams(window.location.search);
+    const vagaId = params.get('vaga') || '';
+    const publicacaoId = params.get('pub') || '';
+    let vagaData = null;
+
+    // ============================================================
+    // 1. BUSCAR DADOS DA VAGA
+    // ============================================================
+    async function carregarVaga() {
+        if (!vagaId) {
+            document.getElementById('vagaTitulo').textContent = 'Vaga não especificada';
+            document.getElementById('vagaEmpresa').textContent = 'Verifique o link enviado.';
+            return;
+        }
+        try {
+            const resp = await fetch(`${API_URL}?action=vaga_publica&vagaId=${encodeURIComponent(vagaId)}`);
+            const data = await resp.json();
+            if (!data.sucesso || !data.vaga) {
+                document.getElementById('vagaTitulo').textContent = 'Vaga não encontrada';
+                document.getElementById('vagaEmpresa').textContent = 'Esta vaga pode ter sido encerrada.';
+                return;
+            }
+            vagaData = data.vaga;
+            renderVaga(vagaData);
+        } catch (e) {
+            document.getElementById('vagaTitulo').textContent = 'Erro ao carregar vaga';
+            document.getElementById('vagaEmpresa').textContent = 'Tente novamente mais tarde.';
+        }
+    }
+
+    function renderVaga(v) {
+        document.getElementById('vagaTitulo').textContent = v.titulo || 'Vaga';
+        document.getElementById('vagaEmpresa').textContent = v.empresa || '';
+        const meta = document.getElementById('vagaMeta');
+        let html = '';
+        if (v.responsavel) html += `<span><i class="fas fa-user-tie"></i> ${escapeHtml(v.responsavel)}</span>`;
+        if (v.qtd_vagas) html += `<span><i class="fas fa-users"></i> ${v.qtd_vagas} vaga(s)</span>`;
+        if (v.data_abertura) {
+            const dt = new Date(v.data_abertura);
+            html += `<span><i class="fas fa-calendar"></i> Aberta em ${dt.toLocaleDateString('pt-BR')}</span>`;
+        }
+        meta.innerHTML = html;
+    }
+
+    // ============================================================
+    // 2. SUBMIT DO FORMULÁRIO
+    // ============================================================
+    document.getElementById('formCandidatura').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnEnviar');
+        const alertErro = document.getElementById('alertErro');
+        alertErro.style.display = 'none';
+
+        // Validação
+        const nome = document.getElementById('nome').value.trim();
+        const telefone = document.getElementById('telefone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const curriculoFile = document.getElementById('curriculo').files[0];
+
+        if (!nome || !telefone || !email) {
+            alertErro.textContent = 'Preencha os campos obrigatórios: Nome, Telefone e E-mail.';
+            alertErro.style.display = 'block';
+            return;
+        }
+        if (!curriculoFile) {
+            alertErro.textContent = 'Anexe seu currículo em PDF.';
+            alertErro.style.display = 'block';
+            return;
+        }
+        if (curriculoFile.size > 5 * 1024 * 1024) {
+            alertErro.textContent = 'O currículo deve ter no máximo 5 MB.';
+            alertErro.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+        // Monta FormData
+        const formData = new FormData();
+        formData.append('nome', nome);
+        formData.append('telefone', telefone);
+        formData.append('email', email);
+        formData.append('data_nascimento', document.getElementById('dataNascimento').value || '');
+        formData.append('cidade', document.getElementById('cidade').value.trim());
+        formData.append('bairro', document.getElementById('bairro').value.trim());
+        formData.append('estado', document.getElementById('estado').value);
+        formData.append('cargo_pretendido', document.getElementById('cargoPretendido').value.trim());
+        formData.append('grau_escolaridade', document.getElementById('grauEscolaridade').value);
+        formData.append('tem_experiencia', document.getElementById('temExperiencia').value);
+        formData.append('anos_experiencia', document.getElementById('anosExperiencia').value || '0');
+        formData.append('esta_empregado', document.getElementById('estaEmpregado').value);
+        formData.append('vaga_id', vagaId);
+        formData.append('publicacao_id', publicacaoId);
+        formData.append('canal_nome', params.get('canal') || '');
+        formData.append('canal_tipo', params.get('tipo') || '');
+        formData.append('utm_source', params.get('utm_source') || '');
+        formData.append('curriculo', curriculoFile);
+
+        try {
+            // Envia para o n8n (WF-A)
+            const resp = await fetch(WEBHOOK_N8N, {
+                method: 'POST',
+                body: formData
+            });
+            if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
+            const result = await resp.json();
+
+            // Sucesso
+            document.getElementById('formContainer').style.display = 'none';
+            document.getElementById('successScreen').style.display = 'block';
+            const msg = `Oi ${nome.split(' ')[0]}! Recebemos sua candidatura para ${vagaData ? vagaData.titulo : 'a vaga'}. Em breve nossa equipe entrará em contato!`;
+            const waUrl = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`;
+            document.getElementById('btnWhatsapp').href = waUrl;
+
+        } catch (err) {
+            alertErro.textContent = 'Erro ao enviar: ' + err.message + '. Tente novamente.';
+            alertErro.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Candidatura';
+        }
+    });
+
+    // ============================================================
+    // 3. UTILS
+    // ============================================================
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Init
+    carregarVaga();
+</script>
+</body>
+</html>
