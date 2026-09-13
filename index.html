@@ -451,6 +451,9 @@
       <button class="tab-btn" id="tabBtnDashboard" onclick="mudarAba('dashboard')">
   <i class="fas fa-chart-line mr-1"></i> Dashboard
 </button>
+      <button class="tab-btn" id="tabBtnIntegracoes" onclick="mudarAba('integracoes')">
+        <i class="fas fa-plug mr-1"></i> Integrações
+      </button>
     </div>
 
     <!-- ============ ABA: LEADS (tabela) ============ -->
@@ -724,7 +727,61 @@
         <div id="dashCandidatosEtapa" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2"></div>
       </div>
     </div>
+        <!-- ============ ABA: INTEGRAÇÕES + TRACKER DE CANAIS ============ -->
+    <div id="tabIntegracoes" class="tab-content">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="font-serif text-2xl font-bold text-slate-900">Integrações & Canais</h2>
+          <p class="text-xs text-slate-400" id="integracoesAtualizadoEm">--</p>
+        </div>
+        <button onclick="carregarIntegracoes(true)" class="btn-outline text-xs !py-1.5">
+          <i class="fas fa-sync-alt"></i> Atualizar
+        </button>
+      </div>
 
+      <!-- STATUS DO n8n -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div class="card-premium p-4 border-l-4 border-emerald-400">
+          <p class="stat-label"><i class="fas fa-paper-plane text-emerald-500 mr-1"></i>Postagens</p>
+          <p class="text-xl font-extrabold text-emerald-600" id="integracoesPostagensOk">0</p>
+          <p class="text-[0.65rem] text-slate-400 mt-1" id="integracoesPostagensInfo">--</p>
+        </div>
+        <div class="card-premium p-4 border-l-4 border-blue-400">
+          <p class="stat-label"><i class="fas fa-user-plus text-blue-500 mr-1"></i>Candidatos</p>
+          <p class="text-xl font-extrabold text-blue-600" id="integracoesCandidatosOk">0</p>
+          <p class="text-[0.65rem] text-slate-400 mt-1" id="integracoesCandidatosInfo">--</p>
+        </div>
+        <div class="card-premium p-4 border-l-4 border-red-400">
+          <p class="stat-label"><i class="fas fa-exclamation-triangle text-red-500 mr-1"></i>Erros</p>
+          <p class="text-xl font-extrabold text-red-600" id="integracoesErros">0</p>
+          <p class="text-[0.65rem] text-slate-400 mt-1">total de falhas registradas</p>
+        </div>
+      </div>
+
+      <!-- TRACKER DE CANAIS -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="card-premium p-5 lg:col-span-2">
+          <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+            <i class="fas fa-trophy text-amber-500 mr-2"></i>Ranking de Canais
+          </h3>
+          <div id="trackerCanaisLista" class="space-y-3"></div>
+        </div>
+        <div class="card-premium p-5">
+          <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+            <i class="fas fa-lightbulb text-amber-500 mr-2"></i>Sugestões
+          </h3>
+          <div id="trackerSugestoes" class="space-y-2 text-sm"></div>
+        </div>
+      </div>
+
+      <!-- LOGS DO n8n -->
+      <div class="card-premium p-5">
+        <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider mb-4">
+          <i class="fas fa-list-ul text-slate-500 mr-2"></i>Últimos Logs (n8n)
+        </h3>
+        <div id="integracoesLogsLista" class="space-y-1 max-h-96 overflow-y-auto"></div>
+      </div>
+    </div>
 
     <div class="text-center text-slate-300 text-[0.6rem] mt-6 tracking-wider">
       GDJ VERTEX © 2026 • CRM & Painel de Gestão • v7.2
@@ -1095,7 +1152,7 @@
     // NAVEGAÇÃO ABAS
     // ============================================================
     function mudarAba(aba) {
-      ['leads','funil','vagas','candidatos','financeiro','calendario','dashboard'].forEach(a => {
+      ['leads','funil','vagas','candidatos','financeiro','calendario','dashboard','integracoes'].forEach(a => {
         const tab = document.getElementById('tab' + capitalizar(a));
         const btn = document.getElementById('tabBtn' + capitalizar(a));
         if (tab) tab.classList.toggle('active', a === aba);
@@ -1105,6 +1162,7 @@
       if (aba === 'financeiro') carregarFinanceiro();
       if (aba === 'calendario') carregarCalendario();
       if (aba === 'dashboard') carregarDashboard();
+      if (aba === 'integracoes') carregarIntegracoes();
     }
     function capitalizar(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
