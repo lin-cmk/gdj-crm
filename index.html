@@ -457,6 +457,9 @@
       <button class="tab-btn" id="tabBtnTalentos" onclick="mudarAba('talentos')">
         <i class="fas fa-address-book mr-1"></i> Banco de Talentos
       </button>
+      <button class="tab-btn" id="tabBtnPostagens" onclick="mudarAba('postagens')">
+        <i class="fas fa-bullhorn mr-1"></i> Postagens
+      </button>
     </div>
 
     <!-- ============ ABA: LEADS (tabela) ============ -->
@@ -761,6 +764,29 @@
         </div>
       </div>
 
+      <!-- ÚLTIMAS 10 POSTAGENS (tarefa 1.3) -->
+      <div class="card-premium p-5 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-slate-700 text-sm font-bold uppercase tracking-wider">
+            <i class="fas fa-bullhorn text-amber-500 mr-2"></i>Últimas Postagens
+          </h3>
+          <button onclick="mudarAba('postagens')" class="text-xs text-blue-600 hover:underline">
+            Ver histórico completo <i class="fas fa-arrow-right ml-1"></i>
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div class="text-center p-2 bg-emerald-50 rounded-lg">
+            <p class="text-lg font-extrabold text-emerald-600" id="integracoesPostagensSucessoCount">0</p>
+            <p class="text-[0.6rem] text-slate-500 uppercase">Sucesso</p>
+          </div>
+          <div class="text-center p-2 bg-red-50 rounded-lg">
+            <p class="text-lg font-extrabold text-red-600" id="integracoesPostagensErroCount">0</p>
+            <p class="text-[0.6rem] text-slate-500 uppercase">Erro</p>
+          </div>
+        </div>
+        <div id="integracoesUltimasPostagens" class="space-y-1"></div>
+      </div>
+
       <!-- TRACKER DE CANAIS -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <div class="card-premium p-5 lg:col-span-2">
@@ -840,6 +866,118 @@
             </thead>
             <tbody id="talentosTabela"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ABA: POSTAGENS (multicanal, via n8n) ============ -->
+    <div id="tabPostagens" class="tab-content">
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <h3 class="text-slate-700 font-semibold text-sm">
+              <i class="fas fa-bullhorn text-amber-500 mr-2"></i>Postagens de Vagas
+            </h3>
+            <span class="text-xs text-slate-400" id="postagensTotal">0 postagem(ns)</span>
+          </div>
+          <button onclick="abrirNovaPostagem()" class="btn-primary text-xs !py-1.5">
+            <i class="fas fa-plus"></i> Nova Postagem
+          </button>
+        </div>
+        <div class="p-4 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="table-header">
+                <th class="px-3 py-2 text-left">Título</th>
+                <th class="px-3 py-2 text-left hidden md:table-cell">Empresa</th>
+                <th class="px-3 py-2 text-left hidden lg:table-cell">Canais</th>
+                <th class="px-3 py-2 text-left">Status</th>
+                <th class="px-3 py-2 text-left hidden md:table-cell">Quando</th>
+                <th class="px-3 py-2 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="postagensTabela"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL: NOVA POSTAGEM ================= -->
+    <div id="modalNovaPostagem" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+      <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-bullhorn text-amber-500 mr-2"></i>Nova Postagem</h3>
+          <button onclick="fecharModal('modalNovaPostagem')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="space-y-3">
+          <select id="postagemVagaId" class="input-field">
+            <option value="">Vincular a uma vaga existente (opcional)</option>
+          </select>
+          <div class="grid grid-cols-2 gap-3">
+            <input type="text" id="postagemTitulo" class="input-field" placeholder="Título da vaga *" />
+            <input type="text" id="postagemEmpresa" class="input-field" placeholder="Empresa" />
+          </div>
+          <textarea id="postagemDescricao" class="input-field" rows="2" placeholder="Descrição da vaga"></textarea>
+          <textarea id="postagemRequisitos" class="input-field" rows="2" placeholder="Requisitos"></textarea>
+          <div class="grid grid-cols-2 gap-3">
+            <input type="text" id="postagemSalario" class="input-field" placeholder="Salário (ex: R$ 2.500 + benefícios)" />
+            <input type="text" id="postagemRegiao" class="input-field" placeholder="Região/Cidade" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <select id="postagemTipoContrato" class="input-field">
+              <option value="">Tipo de contrato</option>
+              <option value="CLT">CLT</option>
+              <option value="PJ">PJ</option>
+              <option value="Estágio">Estágio</option>
+              <option value="Temporário">Temporário</option>
+              <option value="Freelancer">Freelancer</option>
+            </select>
+            <select id="postagemJornada" class="input-field">
+              <option value="">Jornada</option>
+              <option value="Integral">Integral</option>
+              <option value="Meio período">Meio período</option>
+              <option value="Home office">Home office</option>
+              <option value="Híbrido">Híbrido</option>
+            </select>
+          </div>
+          <input type="text" id="postagemBeneficios" class="input-field" placeholder="Benefícios (VT, VR, plano de saúde...)" />
+          <input type="text" id="postagemHashtags" class="input-field" placeholder="Hashtags (#vaga #rh #saopaulo)" />
+
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Criativos (imagens/vídeos)</label>
+            <input type="file" id="postagemCriativos" class="input-field" multiple accept="image/*,video/*" />
+            <div id="postagemCriativosPreview" class="flex flex-wrap gap-2 mt-2"></div>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-slate-600 mb-2 block">Canais de publicação</label>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <label class="flex items-center gap-2 text-sm p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" id="canalWhatsapp" value="whatsapp_grupos"> <i class="fab fa-whatsapp text-emerald-500"></i> WhatsApp
+              </label>
+              <label class="flex items-center gap-2 text-sm p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" id="canalFacebook" value="facebook"> <i class="fab fa-facebook text-blue-600"></i> Facebook
+              </label>
+              <label class="flex items-center gap-2 text-sm p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" id="canalInstagram" value="instagram"> <i class="fab fa-instagram text-pink-500"></i> Instagram
+              </label>
+              <label class="flex items-center gap-2 text-sm p-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" id="canalLinkedin" value="linkedin"> <i class="fab fa-linkedin text-blue-700"></i> LinkedIn
+              </label>
+            </div>
+          </div>
+
+          <div id="postagemPreviewCanais" class="hidden bg-slate-50 rounded-xl p-3 text-xs text-slate-500">
+            Preview por canal aparece aqui depois que a postagem é criada (as legendas são geradas por IA no momento da publicação).
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-5">
+          <button onclick="salvarPostagem('draft')" id="btnSalvarPostagemDraft" class="btn-outline flex-1">Salvar rascunho</button>
+          <button onclick="salvarPostagem('publicar')" id="btnSalvarPostagemPublicar" class="btn-primary flex-1">
+            <i class="fas fa-paper-plane"></i> Salvar e Postar Agora
+          </button>
         </div>
       </div>
     </div>
@@ -1223,7 +1361,7 @@
     // NAVEGAÇÃO ABAS
     // ============================================================
     function mudarAba(aba) {
-      ['leads','funil','vagas','candidatos','financeiro','calendario','dashboard','integracoes','talentos'].forEach(a => {
+      ['leads','funil','vagas','candidatos','financeiro','calendario','dashboard','integracoes','talentos','postagens'].forEach(a => {
         const tab = document.getElementById('tab' + capitalizar(a));
         const btn = document.getElementById('tabBtn' + capitalizar(a));
         if (tab) tab.classList.toggle('active', a === aba);
@@ -1235,6 +1373,7 @@
       if (aba === 'dashboard') carregarDashboard();
       if (aba === 'integracoes') carregarIntegracoes();
       if (aba === 'talentos') buscarTalentos();
+      if (aba === 'postagens') carregarPostagens();
     }
     function capitalizar(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -2693,8 +2832,41 @@
         if (stats.sucesso) renderIntegracoesStats(stats.stats);
         if (canais.sucesso) renderTrackerCanais(canais);
         if (logsResp.sucesso) renderIntegracoesLogs(logsResp.logs);
+
+        await renderUltimasPostagens();
       } catch (e) {
         mostrarToast('Erro ao carregar integrações: ' + e.message, 'erro');
+      }
+    }
+
+    async function renderUltimasPostagens() {
+      const container = document.getElementById('integracoesUltimasPostagens');
+      try {
+        const { data, error } = await sb.from('publicacoes')
+          .select('canal_nome,canal_tipo,status,mensagem_erro,data_publicacao')
+          .order('data_publicacao', { ascending: false })
+          .limit(10);
+
+        if (error) { container.innerHTML = `<p class="text-red-500 text-xs">Erro: ${escapeHtml(error.message)}</p>`; return; }
+
+        const sucesso = (data || []).filter(p => p.status === 'sucesso').length;
+        const erro = (data || []).filter(p => p.status === 'erro').length;
+        document.getElementById('integracoesPostagensSucessoCount').textContent = sucesso;
+        document.getElementById('integracoesPostagensErroCount').textContent = erro;
+
+        if (!data || !data.length) {
+          container.innerHTML = '<p class="text-slate-400 text-sm">Nenhuma postagem registrada ainda</p>';
+          return;
+        }
+
+        const icones = { sucesso: '🟢', erro: '🔴', aviso: '🟡' };
+        container.innerHTML = data.map(p => `
+          <div class="flex items-center justify-between text-xs py-1 border-b border-slate-100">
+            <span class="text-slate-600">${icones[p.status] || '⚪'} ${escapeHtml(p.canal_nome)} <span class="text-slate-400">(${escapeHtml(p.canal_tipo || '')})</span></span>
+            <span class="text-slate-400">${new Date(p.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+          </div>`).join('');
+      } catch (e) {
+        container.innerHTML = `<p class="text-red-500 text-xs">Erro: ${escapeHtml(e.message)}</p>`;
       }
     }
 
@@ -2822,6 +2994,191 @@
         if (e.key === 'Enter') buscarTalentos();
       });
     });
+
+    // ============================================================
+    // POSTAGENS (multicanal — Supabase + n8n WF-POSTAGEM)
+    // ============================================================
+    const N8N_WEBHOOK_POSTAR = 'https://rogerioalves.app.n8n.cloud/webhook/postar';
+    let postagensCriativosUpload = [];
+    let postagemIdEmEdicao = null;
+
+    const STATUS_POSTAGEM_LABELS = { draft: 'Rascunho', agendado: 'Agendado', publicado: 'Publicado' };
+    const STATUS_POSTAGEM_CORES = { draft: 'badge-novo', agendado: 'badge-proposta_enviada', publicado: 'badge-cliente' };
+
+    async function carregarPostagens() {
+      const tbody = document.getElementById('postagensTabela');
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400 py-6">Carregando...</td></tr>';
+      try {
+        const { data, error } = await sb.from('postagens')
+          .select('id,titulo,empresa,canais,status,agendado_para,publicado_em,created_at')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-6">Erro: ${escapeHtml(error.message)}</td></tr>`; return; }
+
+        document.getElementById('postagensTotal').textContent = (data || []).length + ' postagem(ns)';
+
+        if (!data || !data.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400 py-8"><i class="fas fa-bullhorn text-amber-400 text-2xl block mb-2"></i>Nenhuma postagem ainda</td></tr>';
+          return;
+        }
+
+        const iconesCanal = { whatsapp_grupos: '<i class="fab fa-whatsapp text-emerald-500"></i>', facebook: '<i class="fab fa-facebook text-blue-600"></i>', instagram: '<i class="fab fa-instagram text-pink-500"></i>', linkedin: '<i class="fab fa-linkedin text-blue-700"></i>' };
+
+        tbody.innerHTML = data.map(p => {
+          const st = p.status || 'draft';
+          const quando = p.publicado_em ? new Date(p.publicado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+            : p.agendado_para ? 'Agendado: ' + new Date(p.agendado_para).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+            : new Date(p.created_at).toLocaleDateString('pt-BR');
+          return `<tr class="table-row text-sm">
+            <td class="px-3 py-2 text-slate-800 font-medium">${escapeHtml(p.titulo)}</td>
+            <td class="px-3 py-2 text-slate-500 hidden md:table-cell">${escapeHtml(p.empresa) || '-'}</td>
+            <td class="px-3 py-2 hidden lg:table-cell">${(p.canais || []).map(c => iconesCanal[c] || c).join(' ')}</td>
+            <td class="px-3 py-2"><span class="badge ${STATUS_POSTAGEM_CORES[st] || 'badge-novo'}">${STATUS_POSTAGEM_LABELS[st] || st}</span></td>
+            <td class="px-3 py-2 text-slate-400 hidden md:table-cell">${quando}</td>
+            <td class="px-3 py-2 text-right whitespace-nowrap">
+              ${st !== 'publicado' ? `<button onclick="postarAgora('${p.id}')" class="p-1.5 text-emerald-500 hover:bg-emerald-50 rounded" title="Postar agora"><i class="fas fa-paper-plane"></i></button>` : ''}
+              <button onclick="excluirPostagem('${p.id}')" class="p-1.5 text-red-400 hover:bg-red-50 rounded" title="Excluir"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 py-6">Erro: ${escapeHtml(e.message)}</td></tr>`;
+      }
+    }
+
+    function abrirNovaPostagem() {
+      postagemIdEmEdicao = null;
+      postagensCriativosUpload = [];
+      ['postagemTitulo','postagemEmpresa','postagemDescricao','postagemRequisitos','postagemSalario','postagemRegiao','postagemBeneficios','postagemHashtags'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('postagemTipoContrato').value = '';
+      document.getElementById('postagemJornada').value = '';
+      document.getElementById('postagemCriativos').value = '';
+      document.getElementById('postagemCriativosPreview').innerHTML = '';
+      ['canalWhatsapp','canalFacebook','canalInstagram','canalLinkedin'].forEach(id => document.getElementById(id).checked = false);
+
+      const opcoesVaga = (vagasData || []).map(v => `<option value="${v.id}">${escapeHtml(v.titulo)} — ${escapeHtml(v.empresa)}</option>`).join('');
+      document.getElementById('postagemVagaId').innerHTML = '<option value="">Vincular a uma vaga existente (opcional)</option>' + opcoesVaga;
+
+      toggleModal('modalNovaPostagem', true);
+    }
+
+    document.getElementById('postagemCriativos').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      const preview = document.getElementById('postagemCriativosPreview');
+      preview.innerHTML = '<span class="text-xs text-slate-400">Enviando ' + files.length + ' arquivo(s)...</span>';
+      postagensCriativosUpload = [];
+
+      for (const file of files) {
+        try {
+          const nomeArquivo = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+          const { error } = await sb.storage.from('postagens').upload(nomeArquivo, file, { upsert: true });
+          if (error) { mostrarToast('Erro no upload de ' + file.name + ': ' + error.message, 'erro'); continue; }
+          const { data: pub } = sb.storage.from('postagens').getPublicUrl(nomeArquivo);
+          postagensCriativosUpload.push({ url: pub.publicUrl, nome: file.name });
+        } catch (err) {
+          mostrarToast('Erro no upload: ' + err.message, 'erro');
+        }
+      }
+
+      preview.innerHTML = postagensCriativosUpload.map(c => `
+        <span class="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full"><i class="fas fa-check"></i> ${escapeHtml(c.nome)}</span>`).join('') || '<span class="text-xs text-red-500">Nenhum arquivo enviado com sucesso</span>';
+    });
+
+    function canaisSelecionados() {
+      return ['canalWhatsapp','canalFacebook','canalInstagram','canalLinkedin']
+        .map(id => document.getElementById(id))
+        .filter(el => el.checked)
+        .map(el => el.value);
+    }
+
+    async function salvarPostagem(acao) {
+      const titulo = document.getElementById('postagemTitulo').value.trim();
+      if (!titulo) { mostrarToast('Informe o título da vaga.', 'aviso'); return; }
+
+      const canais = canaisSelecionados();
+      if (acao === 'publicar' && !canais.length) { mostrarToast('Selecione pelo menos um canal.', 'aviso'); return; }
+
+      const payload = {
+        vaga_id: document.getElementById('postagemVagaId').value || null,
+        titulo,
+        empresa: document.getElementById('postagemEmpresa').value.trim(),
+        descricao: document.getElementById('postagemDescricao').value.trim(),
+        requisitos: document.getElementById('postagemRequisitos').value.trim(),
+        salario: document.getElementById('postagemSalario').value.trim(),
+        regiao: document.getElementById('postagemRegiao').value.trim(),
+        tipo_contrato: document.getElementById('postagemTipoContrato').value,
+        jornada: document.getElementById('postagemJornada').value,
+        beneficios: document.getElementById('postagemBeneficios').value.trim(),
+        hashtags: document.getElementById('postagemHashtags').value.trim(),
+        criativos: postagensCriativosUpload,
+        canais,
+        status: 'draft',
+      };
+
+      const btnDraft = document.getElementById('btnSalvarPostagemDraft');
+      const btnPublicar = document.getElementById('btnSalvarPostagemPublicar');
+      btnDraft.disabled = true; btnPublicar.disabled = true;
+      btnPublicar.innerHTML = acao === 'publicar' ? '<i class="fas fa-spinner fa-spin"></i> Publicando...' : btnPublicar.innerHTML;
+
+      try {
+        const { data, error } = await sb.from('postagens').insert([payload]).select().single();
+        if (error) { mostrarToast('Erro ao salvar: ' + error.message, 'erro'); return; }
+
+        mostrarToast('✅ Postagem salva!', 'sucesso');
+
+        if (acao === 'publicar') {
+          await postarAgora(data.id);
+        }
+
+        fecharModal('modalNovaPostagem');
+        carregarPostagens();
+      } catch (e) {
+        mostrarToast('Erro: ' + e.message, 'erro');
+      }
+      btnDraft.disabled = false; btnPublicar.disabled = false;
+      btnPublicar.innerHTML = '<i class="fas fa-paper-plane"></i> Salvar e Postar Agora';
+    }
+
+    async function postarAgora(postagemId) {
+      try {
+        const { data: postagem, error } = await sb.from('postagens').select('*').eq('id', postagemId).single();
+        if (error || !postagem) { mostrarToast('Postagem não encontrada.', 'erro'); return; }
+
+        const resp = await fetch(N8N_WEBHOOK_POSTAR, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            postagem_id: postagem.id,
+            vaga_id: postagem.vaga_id,
+            canais: postagem.canais || [],
+            grupos_whatsapp: postagem.grupos_whatsapp || [],
+            paginas_facebook: postagem.paginas_facebook || [],
+            grupos_facebook: [],
+            instagram_user_id: postagem.instagram_user_id || '',
+            linkedin_org_id: postagem.linkedin_org_id || '',
+            url_candidatura: 'https://lin-cmk.github.io/gdj-crm/candidatar/?vaga=' + postagem.vaga_id,
+            url_painel: 'https://lin-cmk.github.io/gdj-crm/',
+          }),
+        });
+        const data = await resp.json();
+        if (!data.sucesso) { mostrarToast('Erro ao postar: ' + (data.erro || 'desconhecido'), 'erro'); return; }
+        mostrarToast('✅ Postagem enviada pro n8n!', 'sucesso');
+        carregarPostagens();
+      } catch (e) {
+        mostrarToast('Erro ao chamar n8n: ' + e.message, 'erro');
+      }
+    }
+
+    async function excluirPostagem(id) {
+      if (!confirm('Excluir esta postagem?')) return;
+      try {
+        const { error } = await sb.from('postagens').delete().eq('id', id);
+        if (error) { mostrarToast('Erro: ' + error.message, 'erro'); return; }
+        mostrarToast('🗑️ Postagem excluída', 'info');
+        carregarPostagens();
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
+    }
   </script>
   </div><!-- /appContent -->
 
