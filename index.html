@@ -454,6 +454,9 @@
       <button class="tab-btn" id="tabBtnIntegracoes" onclick="mudarAba('integracoes')">
         <i class="fas fa-plug mr-1"></i> Integrações
       </button>
+      <button class="tab-btn" id="tabBtnTalentos" onclick="mudarAba('talentos')">
+        <i class="fas fa-address-book mr-1"></i> Banco de Talentos
+      </button>
     </div>
 
     <!-- ============ ABA: LEADS (tabela) ============ -->
@@ -783,6 +786,64 @@
       </div>
     </div>
 
+    <!-- ============ ABA: BANCO DE TALENTOS (consulta direta ao Supabase) ============ -->
+    <div id="tabTalentos" class="tab-content">
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b border-slate-200">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-slate-700 font-semibold text-sm">
+              <i class="fas fa-address-book text-amber-500 mr-2"></i>Banco de Talentos
+            </h3>
+            <span class="text-xs text-slate-400" id="talentosTotal">0 candidato(s)</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+            <input type="text" id="talentosBuscaNome" class="input-field !text-xs" placeholder="Nome ou cargo...">
+            <input type="text" id="talentosCidade" class="input-field !text-xs" placeholder="Cidade">
+            <select id="talentosEstado" class="input-field !text-xs">
+              <option value="">Estado (todos)</option>
+              <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
+              <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
+              <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
+              <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+              <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
+              <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
+              <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
+              <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+              <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+            </select>
+            <select id="talentosStatusBanco" class="input-field !text-xs">
+              <option value="">Status (todos)</option>
+              <option value="novo">Novo</option>
+              <option value="em_analise">Em análise</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="reprovado">Reprovado</option>
+              <option value="contratado">Contratado</option>
+              <option value="arquivado">Arquivado</option>
+            </select>
+            <button onclick="buscarTalentos()" class="btn-primary !text-xs">
+              <i class="fas fa-search"></i> Buscar
+            </button>
+          </div>
+        </div>
+        <div class="p-4 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="table-header">
+                <th class="px-3 py-2 text-left">Nome</th>
+                <th class="px-3 py-2 text-left hidden md:table-cell">Cargo Pretendido</th>
+                <th class="px-3 py-2 text-left hidden lg:table-cell">Cidade/UF</th>
+                <th class="px-3 py-2 text-left hidden md:table-cell">Experiência</th>
+                <th class="px-3 py-2 text-left">Status</th>
+                <th class="px-3 py-2 text-left hidden lg:table-cell">Origem</th>
+                <th class="px-3 py-2 text-right">Currículo</th>
+              </tr>
+            </thead>
+            <tbody id="talentosTabela"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div class="text-center text-slate-300 text-[0.6rem] mt-6 tracking-wider">
       GDJ VERTEX © 2026 • CRM & Painel de Gestão • v7.2
     </div>
@@ -878,6 +939,16 @@
         <input type="text" id="vagaEmpresa" class="input-field" placeholder="Empresa contratante" />
         <input type="text" id="vagaResponsavel" class="input-field" placeholder="Responsável RH" />
         <input type="number" id="vagaQtdVagas" class="input-field" placeholder="Qtd. de vagas" min="1" value="1" />
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Prazo esperado de fechamento</label>
+            <input type="date" id="vagaPrazoEsperado" class="input-field" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Garantia/reposição (meses)</label>
+            <input type="number" id="vagaGarantiaMeses" class="input-field" min="0" value="3" />
+          </div>
+        </div>
         <textarea id="vagaDescricao" class="input-field" rows="3" placeholder="Descrição / requisitos"></textarea>
       </div>
       <div class="flex gap-3 mt-5">
@@ -1152,7 +1223,7 @@
     // NAVEGAÇÃO ABAS
     // ============================================================
     function mudarAba(aba) {
-      ['leads','funil','vagas','candidatos','financeiro','calendario','dashboard','integracoes'].forEach(a => {
+      ['leads','funil','vagas','candidatos','financeiro','calendario','dashboard','integracoes','talentos'].forEach(a => {
         const tab = document.getElementById('tab' + capitalizar(a));
         const btn = document.getElementById('tabBtn' + capitalizar(a));
         if (tab) tab.classList.toggle('active', a === aba);
@@ -1163,6 +1234,7 @@
       if (aba === 'calendario') carregarCalendario();
       if (aba === 'dashboard') carregarDashboard();
       if (aba === 'integracoes') carregarIntegracoes();
+      if (aba === 'talentos') buscarTalentos();
     }
     function capitalizar(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -1702,17 +1774,49 @@
           </div>
           <div class="space-y-2 max-h-80 overflow-y-auto">
             ${items.length === 0 ? '<div class="text-slate-300 text-xs text-center py-4">Vazio</div>' :
-            items.map(v => `<div class="kanban-card" onclick="abrirStatusVaga('${v.id}')">
+            items.map(v => {
+              const prazoInfo = calcularPrazoVagaInfo(v);
+              return `<div class="kanban-card" onclick="abrirStatusVaga('${v.id}')">
               <div class="font-semibold text-sm">${escapeHtml(v.titulo)}</div>
               <div class="text-xs text-slate-500">${escapeHtml(v.empresa) || ''}</div>
               <div class="flex justify-between items-center mt-1">
                 <span class="text-xs text-slate-400">${escapeHtml(v.responsavel) || ''}</span>
                 <span class="text-xs text-slate-400">${v.qtd_vagas ? v.qtd_vagas+' vaga(s)' : ''}</span>
               </div>
-            </div>`).join('')}
+              ${prazoInfo ? `<div class="mt-1.5 text-[0.65rem] font-semibold ${prazoInfo.cor}">${prazoInfo.texto}</div>` : ''}
+              <div class="flex items-center justify-between mt-1.5 pt-1.5 border-t border-slate-100">
+                ${v.consultor_reservando
+                  ? `<span class="text-[0.65rem] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full"><i class="fas fa-user-lock mr-0.5"></i>${escapeHtml(v.consultor_reservando)}</span>`
+                  : `<button onclick="event.stopPropagation(); reservarVaga('${v.id}')" class="text-[0.65rem] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full font-semibold"><i class="fas fa-hand-paper mr-0.5"></i>Reservar pra mim</button>`}
+              </div>
+            </div>`;
+            }).join('')}
           </div>
         </div>`;
       }).join('');
+    }
+
+    function calcularPrazoVagaInfo(v) {
+      if (v.status === 'fechada' || v.status === 'cancelada') return null;
+      if (!v.prazo_esperado_fechamento) return null;
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      const prazo = new Date(v.prazo_esperado_fechamento);
+      const dias = Math.ceil((prazo - hoje) / 86400000);
+      if (dias < 0) return { texto: `⚠️ Prazo vencido há ${Math.abs(dias)}d`, cor: 'text-red-600' };
+      if (dias <= 3) return { texto: `⏰ Vence em ${dias}d`, cor: 'text-amber-600' };
+      return { texto: `Prazo: ${prazo.toLocaleDateString('pt-BR')}`, cor: 'text-slate-400' };
+    }
+
+    async function reservarVaga(id) {
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'reservar_vaga', id, consultor: 'CRM Web' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) mostrarToast('Erro: ' + (data.erro || 'não foi possível reservar'), 'erro');
+        else { mostrarToast('✅ Vaga reservada!', 'sucesso'); carregarVagas(); }
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
     }
 
     function preencherSelectsVaga() {
@@ -1731,6 +1835,8 @@
       const responsavel = document.getElementById('vagaResponsavel').value.trim();
       const qtd_vagas = document.getElementById('vagaQtdVagas').value || 1;
       const descricao = document.getElementById('vagaDescricao').value.trim();
+      const prazo_esperado_fechamento = document.getElementById('vagaPrazoEsperado').value || '';
+      const garantia_meses = document.getElementById('vagaGarantiaMeses').value || 3;
       if (!titulo) { mostrarToast('Informe o título.', 'aviso'); return; }
 
       const btn = document.getElementById('btnSalvarVaga');
@@ -1738,15 +1844,16 @@
       try {
         const resp = await fetch(CONFIG.API_URL, {
           method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
-          body: JSON.stringify({ action: 'criar_vaga', titulo, empresa, responsavel, qtd_vagas, descricao, status: 'aberta' })
+          body: JSON.stringify({ action: 'criar_vaga', titulo, empresa, responsavel, qtd_vagas, descricao, prazo_esperado_fechamento, garantia_meses, status: 'aberta' })
         });
         const data = await resp.json();
         if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
         else {
           mostrarToast('✅ Vaga criada!', 'sucesso');
           fecharModal('modalNovaVaga');
-          ['vagaTitulo','vagaEmpresa','vagaResponsavel','vagaDescricao'].forEach(id => document.getElementById(id).value = '');
+          ['vagaTitulo','vagaEmpresa','vagaResponsavel','vagaDescricao','vagaPrazoEsperado'].forEach(id => document.getElementById(id).value = '');
           document.getElementById('vagaQtdVagas').value = 1;
+          document.getElementById('vagaGarantiaMeses').value = 3;
           carregarVagas();
         }
       } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
@@ -2549,6 +2656,172 @@
         </div>`;
       }).join('');
     }
+
+    // ============================================================
+    // INTEGRAÇÕES & CANAIS (status dos webhooks n8n)
+    // ============================================================
+    function statusDot(ultimaData) {
+      if (!ultimaData) return '🔴';
+      const dias = (Date.now() - new Date(ultimaData).getTime()) / 86400000;
+      if (dias <= 7) return '🟢';
+      if (dias <= 30) return '🟡';
+      return '🔴';
+    }
+
+    function fmtRelativo(dataISO) {
+      if (!dataISO) return 'nunca rodou';
+      const dias = Math.floor((Date.now() - new Date(dataISO).getTime()) / 86400000);
+      if (dias <= 0) return 'hoje';
+      if (dias === 1) return 'ontem';
+      return 'há ' + dias + ' dias';
+    }
+
+    async function carregarIntegracoes(forcar = false) {
+      document.getElementById('integracoesAtualizadoEm').textContent =
+        'Atualizado em ' + new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+      try {
+        const [respStats, respCanais, respLogs] = await Promise.all([
+          fetch(CONFIG.API_URL + '?action=n8n_estatisticas'),
+          fetch(CONFIG.API_URL + '?action=analise_canais'),
+          fetch(CONFIG.API_URL + '?action=n8n_logs&limite=30'),
+        ]);
+        const stats = await respStats.json();
+        const canais = await respCanais.json();
+        const logsResp = await respLogs.json();
+
+        if (stats.sucesso) renderIntegracoesStats(stats.stats);
+        if (canais.sucesso) renderTrackerCanais(canais);
+        if (logsResp.sucesso) renderIntegracoesLogs(logsResp.logs);
+      } catch (e) {
+        mostrarToast('Erro ao carregar integrações: ' + e.message, 'erro');
+      }
+    }
+
+    function renderIntegracoesStats(stats) {
+      const p = stats.postagens || { sucesso: 0, erro: 0, ultima: null };
+      const c = stats.candidatos || { sucesso: 0, erro: 0, ultima: null };
+      const v = stats.vagas || { sucesso: 0, erro: 0, ultima: null };
+
+      document.getElementById('integracoesPostagensOk').textContent = p.sucesso;
+      document.getElementById('integracoesPostagensInfo').textContent =
+        statusDot(p.ultima) + ' última: ' + fmtRelativo(p.ultima);
+
+      document.getElementById('integracoesCandidatosOk').textContent = c.sucesso;
+      document.getElementById('integracoesCandidatosInfo').textContent =
+        statusDot(c.ultima) + ' última: ' + fmtRelativo(c.ultima);
+
+      document.getElementById('integracoesErros').textContent = (p.erro || 0) + (c.erro || 0) + (v.erro || 0);
+    }
+
+    function renderTrackerCanais(canais) {
+      const container = document.getElementById('trackerCanaisLista');
+      const top5 = canais.top5 || [];
+      if (!top5.length) {
+        container.innerHTML = '<p class="text-slate-400 text-sm">Nenhuma publicação registrada ainda</p>';
+      } else {
+        container.innerHTML = top5.map((c, i) => `
+          <div class="flex items-center justify-between text-sm p-2 rounded-lg ${i === 0 ? 'bg-amber-50' : ''}">
+            <span class="text-slate-700"><strong class="text-amber-500">#${i + 1}</strong> ${escapeHtml(c.canal_nome)}
+              <span class="text-slate-400 text-xs">(${escapeHtml(c.canal_tipo || '')})</span>
+            </span>
+            <span class="text-xs text-slate-500">${c.total_candidatos || 0} candidato(s) · ${c.total_vagas || 0} post(s)</span>
+          </div>`).join('');
+      }
+
+      const sugestoesEl = document.getElementById('trackerSugestoes');
+      const sugestoes = canais.sugestoes || [];
+      if (!sugestoes.length) {
+        sugestoesEl.innerHTML = '<p class="text-slate-400 text-sm">Sem sugestões no momento</p>';
+      } else {
+        sugestoesEl.innerHTML = sugestoes.map(s => `<div class="p-2 rounded-lg ${s.tipo === 'aviso' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}">${escapeHtml(s.texto)}</div>`).join('');
+      }
+    }
+
+    function renderIntegracoesLogs(logs) {
+      const container = document.getElementById('integracoesLogsLista');
+      if (!logs || !logs.length) { container.innerHTML = '<p class="text-slate-400 text-sm">Nenhum log ainda</p>'; return; }
+      const icones = { sucesso: '🟢', erro: '🔴', aviso: '🟡' };
+      container.innerHTML = logs.map(l => `
+        <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-100">
+          <span class="text-slate-600">${icones[l.status] || '⚪'} <strong>${escapeHtml(l.fluxo)}</strong> — ${escapeHtml(l.mensagem)}</span>
+          <span class="text-slate-400">${new Date(l.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+        </div>`).join('');
+    }
+
+    // ============================================================
+    // BANCO DE TALENTOS (consulta direta ao Supabase — sem Apps Script)
+    // ============================================================
+    const STATUS_BANCO_LABELS = {
+      novo: 'Novo', em_analise: 'Em análise', aprovado: 'Aprovado',
+      reprovado: 'Reprovado', contratado: 'Contratado', arquivado: 'Arquivado'
+    };
+    const STATUS_BANCO_CORES = {
+      novo: 'badge-novo', em_analise: 'badge-contatado', aprovado: 'badge-qualificado',
+      reprovado: 'badge-perdido', contratado: 'badge-cliente', arquivado: 'badge-perdido'
+    };
+
+    async function buscarTalentos() {
+      const tbody = document.getElementById('talentosTabela');
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-slate-400 py-6">Buscando...</td></tr>';
+
+      const termo = document.getElementById('talentosBuscaNome').value.trim();
+      const cidade = document.getElementById('talentosCidade').value.trim();
+      const estado = document.getElementById('talentosEstado').value;
+      const statusBanco = document.getElementById('talentosStatusBanco').value;
+
+      try {
+        let query = sb.from('candidatos')
+          .select('id,nome,cargo_pretendido,cidade,estado,tem_experiencia,anos_experiencia,status_banco,origem_canal,curriculo_url,curriculo_nome,created_at')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (termo) query = query.or(`nome.ilike.%${termo}%,cargo_pretendido.ilike.%${termo}%`);
+        if (cidade) query = query.ilike('cidade', `%${cidade}%`);
+        if (estado) query = query.eq('estado', estado);
+        if (statusBanco) query = query.eq('status_banco', statusBanco);
+
+        const { data, error } = await query;
+
+        if (error) {
+          tbody.innerHTML = `<tr><td colspan="7" class="text-center text-red-500 py-6">Erro: ${escapeHtml(error.message)}</td></tr>`;
+          return;
+        }
+
+        document.getElementById('talentosTotal').textContent = (data || []).length + ' candidato(s)';
+
+        if (!data || !data.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-slate-400 py-8"><i class="fas fa-inbox text-amber-400 text-2xl block mb-2"></i>Nenhum candidato encontrado</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.map(c => {
+          const st = c.status_banco || 'novo';
+          const exp = c.tem_experiencia === 'sim' ? (c.anos_experiencia || 0) + ' ano(s)' : 'Sem experiência';
+          return `<tr class="table-row text-sm">
+            <td class="px-3 py-2 text-slate-800 font-medium">${escapeHtml(c.nome) || '-'}</td>
+            <td class="px-3 py-2 text-slate-500 hidden md:table-cell">${escapeHtml(c.cargo_pretendido) || '-'}</td>
+            <td class="px-3 py-2 text-slate-500 hidden lg:table-cell">${escapeHtml(c.cidade) || '-'}${c.estado ? '/' + c.estado : ''}</td>
+            <td class="px-3 py-2 text-slate-500 hidden md:table-cell">${exp}</td>
+            <td class="px-3 py-2"><span class="badge ${STATUS_BANCO_CORES[st] || 'badge-novo'}">${STATUS_BANCO_LABELS[st] || st}</span></td>
+            <td class="px-3 py-2 text-slate-400 hidden lg:table-cell">${escapeHtml(c.origem_canal) || '-'}</td>
+            <td class="px-3 py-2 text-right">
+              ${c.curriculo_url
+                ? `<a href="${c.curriculo_url}" target="_blank" class="text-blue-600 hover:underline text-xs"><i class="fas fa-file-pdf"></i> Ver</a>`
+                : '<span class="text-slate-300 text-xs">—</span>'}
+            </td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-red-500 py-6">Erro: ${escapeHtml(e.message)}</td></tr>`;
+      }
+    }
+
+    ['talentosBuscaNome', 'talentosCidade'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') buscarTalentos();
+      });
+    });
   </script>
   </div><!-- /appContent -->
 
