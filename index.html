@@ -460,6 +460,9 @@
       <button class="tab-btn" id="tabBtnPostagens" onclick="mudarAba('postagens')">
         <i class="fas fa-bullhorn mr-1"></i> Postagens
       </button>
+      <button class="tab-btn" id="tabBtnConversas" onclick="mudarAba('conversas')">
+        <i class="fas fa-comments mr-1"></i> Conversas
+      </button>
     </div>
 
     <!-- ============ ABA: LEADS (tabela) ============ -->
@@ -898,6 +901,80 @@
             </thead>
             <tbody id="postagensTabela"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ABA: CONVERSAS (inbox multi-canal, tempo real) ============ -->
+    <div id="tabConversas" class="tab-content">
+      <div class="card overflow-hidden" style="height: 75vh;">
+        <div class="flex h-full">
+          <!-- LISTA DE CONVERSAS -->
+          <div class="w-full md:w-80 border-r border-slate-200 flex flex-col" id="conversasListaColuna">
+            <div class="p-3 border-b border-slate-200 space-y-2">
+              <input type="text" id="conversasBusca" class="input-field !text-xs" placeholder="🔍 Buscar nome, telefone, mensagem...">
+              <div id="conversasFiltroEtiquetas" class="flex flex-wrap gap-1"></div>
+            </div>
+            <div id="conversasLista" class="flex-1 overflow-y-auto"></div>
+          </div>
+
+          <!-- JANELA DE CONVERSA -->
+          <div class="flex-1 flex-col hidden md:flex" id="conversasJanela">
+            <div id="conversasSemSelecao" class="flex-1 flex items-center justify-center text-slate-300">
+              <div class="text-center">
+                <i class="fas fa-comments text-4xl mb-2 block"></i>
+                <p class="text-sm">Selecione uma conversa</p>
+              </div>
+            </div>
+
+            <div id="conversasConteudo" class="hidden flex-1 flex flex-col">
+              <!-- Header do contato -->
+              <div class="p-3 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold text-slate-900 text-sm" id="conversaContatoNome">--</h4>
+                  <p class="text-xs text-slate-400" id="conversaContatoTelefone">--</p>
+                  <div id="conversaContatoEtiquetas" class="flex flex-wrap gap-1 mt-1"></div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <select id="conversaStatusSelect" onchange="atualizarStatusConversa()" class="input-field !text-xs !w-36 !py-1">
+                    <option value="novo">🟢 Novo</option>
+                    <option value="em_atendimento">🔵 Em atendimento</option>
+                    <option value="aguardando">🟡 Aguardando</option>
+                    <option value="resolvido">⚪ Resolvido</option>
+                  </select>
+                  <button onclick="toggleNotasInternas()" class="btn-outline !text-xs !py-1.5" title="Notas internas">
+                    <i class="fas fa-sticky-note"></i>
+                  </button>
+                  <button onclick="toggleEtiquetasPicker()" class="btn-outline !text-xs !py-1.5" title="Etiquetas">
+                    <i class="fas fa-tag"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Notas internas (colapsável) -->
+              <div id="conversaNotasBox" class="hidden p-3 bg-amber-50 border-b border-amber-100">
+                <textarea id="conversaNotaInterna" class="notas-textarea !min-h-[60px]" placeholder="Nota interna (só a equipe vê)..."></textarea>
+                <button onclick="salvarNotaInterna()" class="btn-primary !text-xs !py-1 mt-2">Salvar nota</button>
+              </div>
+
+              <!-- Picker de etiquetas (colapsável) -->
+              <div id="conversaEtiquetasPickerBox" class="hidden p-3 bg-slate-50 border-b border-slate-200">
+                <div id="conversaEtiquetasPicker" class="flex flex-wrap gap-2"></div>
+              </div>
+
+              <!-- Mensagens -->
+              <div id="conversaMensagens" class="flex-1 overflow-y-auto p-4 flex flex-col"></div>
+
+              <!-- Composer -->
+              <div class="p-3 border-t border-slate-200 relative">
+                <div id="respostasRapidasDropdown" class="hidden absolute bottom-full left-3 right-3 bg-white border border-slate-200 rounded-lg shadow-lg mb-1 max-h-48 overflow-y-auto"></div>
+                <div class="flex gap-2">
+                  <input type="text" id="conversaInputMensagem" class="input-field" placeholder="Digite uma mensagem... (use / pra respostas rápidas)" autocomplete="off">
+                  <button onclick="enviarMensagemConversa()" class="btn-emerald !px-4"><i class="fas fa-paper-plane"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1361,7 +1438,7 @@
     // NAVEGAÇÃO ABAS
     // ============================================================
     function mudarAba(aba) {
-      ['leads','funil','vagas','candidatos','financeiro','calendario','dashboard','integracoes','talentos','postagens'].forEach(a => {
+      ['leads','funil','vagas','candidatos','financeiro','calendario','dashboard','integracoes','talentos','postagens','conversas'].forEach(a => {
         const tab = document.getElementById('tab' + capitalizar(a));
         const btn = document.getElementById('tabBtn' + capitalizar(a));
         if (tab) tab.classList.toggle('active', a === aba);
@@ -1374,6 +1451,7 @@
       if (aba === 'integracoes') carregarIntegracoes();
       if (aba === 'talentos') buscarTalentos();
       if (aba === 'postagens') carregarPostagens();
+      if (aba === 'conversas') carregarInboxConversas();
     }
     function capitalizar(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -3178,6 +3256,313 @@
         mostrarToast('🗑️ Postagem excluída', 'info');
         carregarPostagens();
       } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
+    }
+
+    // ============================================================
+    // CONVERSAS — Inbox multi-canal (Fase 1)
+    // ============================================================
+    let conversationLabels = [];
+    let leadLabelsMap = {};       // lead_id -> [label objects]
+    let quickReplies = [];
+    let conversaLeadAtivo = null;
+    let conversasRealtimeChannel = null;
+    let etiquetasFiltroAtivas = new Set();
+
+    async function carregarInboxConversas() {
+      try {
+        const [{ data: labels }, { data: links }, { data: replies }] = await Promise.all([
+          sb.from('conversation_labels').select('*').order('nome'),
+          sb.from('conversation_label_links').select('lead_id,label_id'),
+          sb.from('quick_replies').select('*').order('atalho'),
+        ]);
+
+        conversationLabels = labels || [];
+        quickReplies = replies || [];
+
+        leadLabelsMap = {};
+        (links || []).forEach(l => {
+          if (!leadLabelsMap[l.lead_id]) leadLabelsMap[l.lead_id] = [];
+          const label = conversationLabels.find(c => c.id === l.label_id);
+          if (label) leadLabelsMap[l.lead_id].push(label);
+        });
+
+        renderConversasFiltroEtiquetas();
+        renderConversasLista();
+        configurarRealtimeConversas();
+      } catch (e) {
+        mostrarToast('Erro ao carregar inbox: ' + e.message, 'erro');
+      }
+    }
+
+    function renderConversasFiltroEtiquetas() {
+      const container = document.getElementById('conversasFiltroEtiquetas');
+      container.innerHTML = conversationLabels.map(l => `
+        <button onclick="toggleFiltroEtiqueta('${l.id}')" data-label="${l.id}"
+          class="text-[0.65rem] px-2 py-0.5 rounded-full font-semibold border transition"
+          style="border-color:${l.cor}; ${etiquetasFiltroAtivas.has(l.id) ? `background:${l.cor};color:#fff;` : `color:${l.cor};`}">
+          ${escapeHtml(l.nome)}
+        </button>`).join('');
+    }
+
+    function toggleFiltroEtiqueta(labelId) {
+      if (etiquetasFiltroAtivas.has(labelId)) etiquetasFiltroAtivas.delete(labelId);
+      else etiquetasFiltroAtivas.add(labelId);
+      renderConversasFiltroEtiquetas();
+      renderConversasLista();
+    }
+
+    function renderConversasLista() {
+      const container = document.getElementById('conversasLista');
+      const termo = (document.getElementById('conversasBusca').value || '').toLowerCase().trim();
+
+      let lista = (leadsData || []).filter(l => l.telefone);
+
+      if (termo) {
+        lista = lista.filter(l =>
+          (l.nome || '').toLowerCase().includes(termo) ||
+          (l.telefone || '').includes(termo) ||
+          (l.notas || '').toLowerCase().includes(termo)
+        );
+      }
+
+      if (etiquetasFiltroAtivas.size > 0) {
+        lista = lista.filter(l => {
+          const labelsDoLead = (leadLabelsMap[l.id] || []).map(x => x.id);
+          return [...etiquetasFiltroAtivas].every(id => labelsDoLead.includes(id));
+        });
+      }
+
+      lista.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+      if (!lista.length) {
+        container.innerHTML = '<p class="text-slate-400 text-sm text-center p-6">Nenhuma conversa encontrada</p>';
+        return;
+      }
+
+      container.innerHTML = lista.map(l => {
+        const labels = leadLabelsMap[l.id] || [];
+        const ativo = l.id === conversaLeadAtivo;
+        return `<div onclick="selecionarConversa('${l.id}')"
+          class="p-3 border-b border-slate-100 cursor-pointer hover:bg-slate-50 ${ativo ? 'bg-amber-50' : ''}">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sm text-slate-800 truncate">${escapeHtml(l.nome) || 'Sem nome'}</span>
+            <span class="text-[0.6rem] text-slate-400">${l.dias ?? 0}d</span>
+          </div>
+          <p class="text-xs text-slate-400 truncate">${escapeHtml(l.telefone) || ''}</p>
+          <div class="flex flex-wrap gap-1 mt-1">
+            ${labels.map(lb => `<span class="text-[0.55rem] px-1.5 py-0.5 rounded-full text-white" style="background:${lb.cor}">${escapeHtml(lb.nome)}</span>`).join('')}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    document.getElementById('conversasBusca').addEventListener('input', renderConversasLista);
+
+    async function selecionarConversa(leadId) {
+      conversaLeadAtivo = leadId;
+      const lead = leadsData.find(l => l.id === leadId);
+      if (!lead) return;
+
+      document.getElementById('conversasSemSelecao').classList.add('hidden');
+      document.getElementById('conversasConteudo').classList.remove('hidden');
+      document.getElementById('conversasConteudo').classList.add('flex');
+      document.getElementById('conversasJanela').classList.remove('hidden');
+      document.getElementById('conversasJanela').classList.add('flex');
+
+      document.getElementById('conversaContatoNome').textContent = lead.nome || 'Sem nome';
+      document.getElementById('conversaContatoTelefone').textContent = lead.telefone || '--';
+      document.getElementById('conversaStatusSelect').value = lead.status_conversa || 'novo';
+      document.getElementById('conversaNotaInterna').value = lead.nota_interna || lead.notas || '';
+      document.getElementById('conversaNotasBox').classList.add('hidden');
+      document.getElementById('conversaEtiquetasPickerBox').classList.add('hidden');
+
+      renderConversaContatoEtiquetas();
+      renderConversasLista();
+      await carregarMensagensConversa(leadId);
+    }
+
+    function renderConversaContatoEtiquetas() {
+      const labels = leadLabelsMap[conversaLeadAtivo] || [];
+      document.getElementById('conversaContatoEtiquetas').innerHTML = labels.map(l =>
+        `<span class="text-[0.6rem] px-2 py-0.5 rounded-full text-white" style="background:${l.cor}">${escapeHtml(l.nome)}</span>`
+      ).join('') || '<span class="text-[0.6rem] text-slate-300">sem etiquetas</span>';
+    }
+
+    function toggleNotasInternas() {
+      document.getElementById('conversaNotasBox').classList.toggle('hidden');
+      document.getElementById('conversaEtiquetasPickerBox').classList.add('hidden');
+    }
+
+    async function salvarNotaInterna() {
+      if (!conversaLeadAtivo) return;
+      const nota = document.getElementById('conversaNotaInterna').value;
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'salvar_notas', id: conversaLeadAtivo, notas: nota, usuario: 'Inbox Conversas' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) { mostrarToast('Erro: ' + data.erro, 'erro'); return; }
+        mostrarToast('✅ Nota salva!', 'sucesso');
+        const lead = leadsData.find(l => l.id === conversaLeadAtivo);
+        if (lead) lead.notas = nota;
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
+    }
+
+    function toggleEtiquetasPicker() {
+      document.getElementById('conversaEtiquetasPickerBox').classList.toggle('hidden');
+      document.getElementById('conversaNotasBox').classList.add('hidden');
+      renderConversaEtiquetasPicker();
+    }
+
+    function renderConversaEtiquetasPicker() {
+      const ativos = (leadLabelsMap[conversaLeadAtivo] || []).map(l => l.id);
+      document.getElementById('conversaEtiquetasPicker').innerHTML = conversationLabels.map(l => {
+        const ativo = ativos.includes(l.id);
+        return `<button onclick="toggleEtiquetaNoLead('${l.id}')"
+          class="text-xs px-3 py-1 rounded-full font-semibold border"
+          style="border-color:${l.cor}; ${ativo ? `background:${l.cor};color:#fff;` : `color:${l.cor};`}">
+          ${ativo ? '✓ ' : ''}${escapeHtml(l.nome)}
+        </button>`;
+      }).join('');
+    }
+
+    async function toggleEtiquetaNoLead(labelId) {
+      if (!conversaLeadAtivo) return;
+      const temAgora = (leadLabelsMap[conversaLeadAtivo] || []).some(l => l.id === labelId);
+      try {
+        if (temAgora) {
+          const { error } = await sb.from('conversation_label_links').delete()
+            .eq('lead_id', conversaLeadAtivo).eq('label_id', labelId);
+          if (error) throw error;
+          leadLabelsMap[conversaLeadAtivo] = (leadLabelsMap[conversaLeadAtivo] || []).filter(l => l.id !== labelId);
+        } else {
+          const { error } = await sb.from('conversation_label_links').insert([{ lead_id: conversaLeadAtivo, label_id: labelId }]);
+          if (error) throw error;
+          const label = conversationLabels.find(l => l.id === labelId);
+          if (!leadLabelsMap[conversaLeadAtivo]) leadLabelsMap[conversaLeadAtivo] = [];
+          leadLabelsMap[conversaLeadAtivo].push(label);
+        }
+        renderConversaEtiquetasPicker();
+        renderConversaContatoEtiquetas();
+        renderConversasLista();
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
+    }
+
+    async function atualizarStatusConversa() {
+      if (!conversaLeadAtivo) return;
+      const status = document.getElementById('conversaStatusSelect').value;
+      try {
+        const { error } = await sb.from('leads').update({ status_conversa: status }).eq('id', conversaLeadAtivo);
+        if (error) { mostrarToast('Erro: ' + error.message, 'erro'); return; }
+        const lead = leadsData.find(l => l.id === conversaLeadAtivo);
+        if (lead) lead.status_conversa = status;
+        mostrarToast('✅ Status atualizado', 'sucesso');
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
+    }
+
+    async function carregarMensagensConversa(leadId) {
+      const container = document.getElementById('conversaMensagens');
+      container.innerHTML = '<p class="text-slate-400 text-sm text-center my-auto">Carregando...</p>';
+      try {
+        const resp = await fetch(CONFIG.API_URL + '?action=conversas&leadId=' + encodeURIComponent(leadId));
+        const data = await resp.json();
+        renderMensagensConversa(data.sucesso ? (data.conversas || []) : []);
+      } catch (e) {
+        container.innerHTML = `<p class="text-red-500 text-sm text-center my-auto">Erro: ${escapeHtml(e.message)}</p>`;
+      }
+    }
+
+    function renderMensagensConversa(mensagens) {
+      const container = document.getElementById('conversaMensagens');
+      if (!mensagens.length) {
+        container.innerHTML = '<p class="text-slate-400 text-sm text-center my-auto">Nenhuma mensagem ainda.</p>';
+        return;
+      }
+      container.innerHTML = mensagens.map(msg => {
+        const env = msg.direcao === 'enviada';
+        const hora = msg.data_hora ? new Date(msg.data_hora).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '';
+        return `<div class="flex flex-col ${env ? 'items-end' : 'items-start'}">
+          <div class="chat-bubble ${env ? 'chat-enviada' : 'chat-recebida'}">${escapeHtml(msg.mensagem) || '<i>Mídia</i>'}</div>
+          <span class="chat-time">${hora}</span>
+        </div>`;
+      }).join('');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function enviarMensagemConversa() {
+      const input = document.getElementById('conversaInputMensagem');
+      const mensagem = input.value.trim();
+      if (!mensagem || !conversaLeadAtivo) return;
+      const lead = leadsData.find(l => l.id === conversaLeadAtivo);
+      if (!lead?.telefone) { mostrarToast('Lead sem telefone.', 'aviso'); return; }
+
+      input.value = '';
+      document.getElementById('respostasRapidasDropdown').classList.add('hidden');
+
+      try {
+        const resp = await fetch(CONFIG.API_URL, {
+          method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action: 'enviar_whatsapp', telefone: lead.telefone, mensagem, usuario: 'Inbox Conversas' })
+        });
+        const data = await resp.json();
+        if (!data.sucesso) { mostrarToast('Erro: ' + data.erro, 'erro'); return; }
+        await carregarMensagensConversa(conversaLeadAtivo);
+      } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
+    }
+
+    // Respostas rápidas: digitar "/" abre o dropdown de atalhos
+    document.getElementById('conversaInputMensagem').addEventListener('input', (e) => {
+      const valor = e.target.value;
+      const dropdown = document.getElementById('respostasRapidasDropdown');
+      const match = valor.match(/(^|\s)\/(\w*)$/);
+      if (!match) { dropdown.classList.add('hidden'); return; }
+
+      const termo = match[2].toLowerCase();
+      const filtradas = quickReplies.filter(q => q.atalho.toLowerCase().includes(termo));
+      if (!filtradas.length) { dropdown.classList.add('hidden'); return; }
+
+      dropdown.innerHTML = filtradas.map(q => `
+        <div onclick="usarRespostaRapida('${q.id}')" class="p-2 text-xs hover:bg-slate-50 cursor-pointer border-b border-slate-100">
+          <strong class="text-amber-600">/${escapeHtml(q.atalho)}</strong>
+          <p class="text-slate-500 truncate">${escapeHtml(q.texto)}</p>
+        </div>`).join('');
+      dropdown.classList.remove('hidden');
+    });
+
+    document.getElementById('conversaInputMensagem').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') enviarMensagemConversa();
+      if (e.key === 'Escape') document.getElementById('respostasRapidasDropdown').classList.add('hidden');
+    });
+
+    function usarRespostaRapida(quickReplyId) {
+      const reply = quickReplies.find(q => q.id === quickReplyId);
+      if (!reply) return;
+      const lead = leadsData.find(l => l.id === conversaLeadAtivo) || {};
+      const texto = reply.texto
+        .replace(/\{nome\}/gi, lead.nome || '')
+        .replace(/\{vaga\}/gi, lead.interesse || '');
+      const input = document.getElementById('conversaInputMensagem');
+      input.value = texto;
+      document.getElementById('respostasRapidasDropdown').classList.add('hidden');
+      input.focus();
+    }
+
+    // Tempo real: nova mensagem chega -> atualiza a conversa aberta (e a lista)
+    function configurarRealtimeConversas() {
+      if (conversasRealtimeChannel) return; // já configurado, não duplica a subscription
+      conversasRealtimeChannel = sb
+        .channel('inbox-whatsapp-conversations')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'whatsapp_conversations' }, (payload) => {
+          const msg = payload.new;
+          if (msg.lead_id === conversaLeadAtivo) {
+            carregarMensagensConversa(conversaLeadAtivo);
+          }
+          if (document.getElementById('tabConversas').classList.contains('active')) {
+            renderConversasLista();
+          }
+        })
+        .subscribe();
     }
   </script>
   </div><!-- /appContent -->
