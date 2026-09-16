@@ -2540,57 +2540,82 @@
     // CALENDÁRIO
     // ============================================================
     async function carregarCalendario() {
-      try {
-        const resp = await fetch(CONFIG.API_URL + '?action=calendario_entrevistas&dias=7');
-        const data = await resp.json();
-        const eventos = data.sucesso ? (data.eventos || []) : [];
-        document.getElementById('totalEventos').textContent = eventos.length + ' eventos';
-        const container = document.getElementById('calendarioLista');
+  try {
+    const resp = await fetch(CONFIG.API_URL + '?action=calendario_entrevistas&dias=7');
+    const data = await resp.json();
+    const eventos = data.sucesso ? (data.eventos || []) : [];
+    document.getElementById('totalEventos').textContent = eventos.length + ' eventos';
+    const container = document.getElementById('calendarioLista');
 
-        if (!eventos.length) {
-          container.innerHTML = `<div class="text-center py-12 text-slate-400">
-            <i class="fas fa-calendar-check text-4xl mb-3 block opacity-50"></i>
-            <p class="text-sm">Sem entrevistas nos próximos 7 dias</p>
-          </div>`;
-          return;
-        }
-
-        const hoje = new Date(); hoje.setHours(0,0,0,0);
-        container.innerHTML = eventos.map(ev => {
-          const dt = new Date(ev.data_entrevista);
-          const dias = Math.ceil((dt - hoje) / 86400000);
-          const isHoje = dt.toDateString() === new Date().toDateString();
-          const isAtrasado = ev.status === 'atrasada';
-
-          const badge = isAtrasado ? '<span class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full font-bold">🔴 ATRASADA</span>'
-            : isHoje ? '<span class="bg-amber-100 text-amber-700 text-xs px-3 py-1 rounded-full font-bold">🟡 HOJE</span>'
-            : dias === 1 ? '<span class="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full font-bold">⏰ Amanhã</span>'
-            : '<span class="bg-emerald-100 text-emerald-700 text-xs px-3 py-1 rounded-full font-bold">🟢 Em ' + dias + 'd</span>';
-
-          return `<div class="card p-4 mb-3 border-l-4 ${isAtrasado ? 'border-red-400' : isHoje ? 'border-amber-400' : 'border-emerald-400'}">
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="text-xl">${isAtrasado ? '🔴' : isHoje ? '🟡' : '🟢'}</span>
-                  <div>
-                    <div class="font-bold text-slate-900">${escapeHtml(ev.candidato)}</div>
-                    <div class="text-xs text-slate-500">${escapeHtml(ev.cargo) || ''} ${ev.empresa ? '· ' + escapeHtml(ev.empresa) : ''}</div>
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3 text-xs">
-                  <div><i class="fas fa-clock text-slate-400 mr-1"></i><strong>${dt.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</strong></div>
-                  <div><i class="fas fa-user text-slate-400 mr-1"></i>${escapeHtml(ev.entrevistador)}</div>
-                  <div><i class="fas fa-briefcase text-slate-400 mr-1"></i>${escapeHtml(ev.vaga) || '—'}</div>
-                  <div><i class="fas fa-phone text-slate-400 mr-1"></i>${escapeHtml(ev.telefone) || '—'}</div>
-                </div>
-              </div>
-              <div class="ml-3">${badge}</div>
-            </div>
-          </div>`;
-        }).join('');
-      } catch (e) { console.error(e); }
+    if (!eventos.length) {
+      container.innerHTML = `<div class="text-center py-12 text-slate-400">
+        <i class="fas fa-calendar-check text-4xl mb-3 block opacity-50"></i>
+        <p class="text-sm">Sem entrevistas nos próximos 7 dias</p>
+      </div>`;
+      return;
     }
 
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    container.innerHTML = eventos.map(ev => {
+      const dt = new Date(ev.data_entrevista);
+      const dias = Math.ceil((dt - hoje) / 86400000);
+      const isHoje = dt.toDateString() === new Date().toDateString();
+      const isAtrasado = ev.status === 'atrasada';
+      const temLink = ev.link_meet && ev.link_meet.length > 0;
+
+      const badge = isAtrasado ? '<span class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full font-bold">🔴 ATRASADA</span>'
+        : isHoje ? '<span class="bg-amber-100 text-amber-700 text-xs px-3 py-1 rounded-full font-bold">🟡 HOJE</span>'
+        : dias === 1 ? '<span class="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full font-bold">⏰ Amanhã</span>'
+        : '<span class="bg-emerald-100 text-emerald-700 text-xs px-3 py-1 rounded-full font-bold">🟢 Em ' + dias + 'd</span>';
+
+      return `<div class="card p-4 mb-3 border-l-4 ${isAtrasado ? 'border-red-400' : isHoje ? 'border-amber-400' : 'border-emerald-400'}">
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">${isAtrasado ? '🔴' : isHoje ? '🟡' : '🟢'}</span>
+              <div>
+                <div class="font-bold text-slate-900">${escapeHtml(ev.candidato)}</div>
+                <div class="text-xs text-slate-500">${escapeHtml(ev.cargo) || ''} ${ev.empresa ? '· ' + escapeHtml(ev.empresa) : ''}</div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div><i class="fas fa-clock text-slate-400 mr-1"></i><strong>${dt.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</strong></div>
+              <div><i class="fas fa-user text-slate-400 mr-1"></i>${escapeHtml(ev.entrevistador)}</div>
+              <div><i class="fas fa-briefcase text-slate-400 mr-1"></i>${escapeHtml(ev.vaga) || '—'}</div>
+              <div><i class="fas fa-phone text-slate-400 mr-1"></i>${escapeHtml(ev.telefone) || '—'}</div>
+            </div>
+            ${temLink ? `
+              <div class="mt-3 pt-3 border-t border-slate-100">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <a href="${ev.link_meet}" target="_blank" class="btn-emerald !text-xs !py-1.5">
+                    <i class="fas fa-video mr-1"></i> Entrar no Meet
+                  </a>
+                  <button onclick="copiarLinkMeet('${ev.link_meet}')" class="btn-outline !text-xs !py-1.5">
+                    <i class="fas fa-copy mr-1"></i> Copiar link
+                  </button>
+                  <span class="text-[0.65rem] text-slate-400 truncate">${ev.link_meet}</span>
+                </div>
+              </div>
+            ` : `
+              <div class="mt-3 pt-3 border-t border-slate-100">
+                <span class="text-xs text-slate-400 italic">Sem link do Meet</span>
+              </div>
+            `}
+          </div>
+          <div class="ml-3">${badge}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) { console.error(e); }
+}
+
+function copiarLinkMeet(link) {
+  navigator.clipboard.writeText(link).then(() => {
+    mostrarToast('✅ Link copiado!', 'sucesso');
+  }).catch(() => {
+    mostrarToast('Erro ao copiar. Copie manualmente: ' + link, 'aviso');
+  });
+}
     // ============================================================
     // EXPORTAR CSV
     // ============================================================
