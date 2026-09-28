@@ -345,6 +345,8 @@
     // ============================================================
     const API_URL = 'https://script.google.com/macros/s/AKfycbzh0RzG1TmcFD-op3BK6WLGRPnUqN7hTdFnPWtD_62nvyV7yq3NB29wssCntDrxv-Dr/exec';
     const WEBHOOK_N8N = 'https://rogerioalves.app.n8n.cloud/webhook/candidato'; 
+    // Plano B: se o n8n falhar, grava direto na planilha pelo mesmo Apps Script do painel (sem o arquivo do currículo)
+    const API_URL_CRM = 'https://script.google.com/macros/s/AKfycbzrY0RfVC1hoAb972c742tjVx80SxbhVPWbHFvr8deWw2UCnLxG7CdLzokrLC-oP872/exec';
     const WHATSAPP_NUMERO = '5511966810215';
 
     // Lê parâmetros da URL
@@ -448,13 +450,39 @@
         formData.append('curriculo', curriculoFile);
 
         try {
-            // Envia para o n8n (WF-A)
-            const resp = await fetch(WEBHOOK_N8N, {
-                method: 'POST',
-                body: formData
-            });
-            if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
-            const result = await resp.json();
+            // 1) Tenta o n8n (WF-A), que também salva o currículo
+            let enviado = false;
+            try {
+                const ctrl = new AbortController();
+                const timer = setTimeout(() => ctrl.abort(), 20000);
+                const resp = await fetch(WEBHOOK_N8N, { method: 'POST', body: formData, signal: ctrl.signal });
+                clearTimeout(timer);
+                enviado = resp.ok;
+            } catch (e) { enviado = false; }
+
+            // 2) Plano B: grava direto na planilha, vinculado à vaga
+            if (!enviado) {
+                const val = id => (document.getElementById(id)?.value || '').trim();
+                const obs = [
+                    '[Formulário online - currículo NÃO recebido, pedir por WhatsApp/e-mail]',
+                    'Nascimento: ' + (val('dataNascimento') || '-'),
+                    'Cidade: ' + [val('cidade'), val('bairro'), val('estado')].filter(Boolean).join(' / '),
+                    'Escolaridade: ' + (val('grauEscolaridade') || '-'),
+                    'Experiência: ' + (val('temExperiencia') || '-') + ' (' + (val('anosExperiencia') || '0') + ' anos)',
+                    'Empregado: ' + (val('estaEmpregado') || '-'),
+                    'Canal: ' + [params.get('canal'), params.get('tipo'), params.get('utm_source')].filter(Boolean).join(' / ')
+                ].join(' | ');
+                const r2 = await fetch(API_URL_CRM, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'criar_candidato', vaga_id: vagaId, nome, telefone, email,
+                        cargo_desejado: val('cargoPretendido') || (vagaData ? vagaData.titulo : ''),
+                        observacoes: obs, etapa: 'inscrito', origem: 'formulario_online'
+                    })
+                });
+                const d2 = await r2.json();
+                if (!d2.sucesso) throw new Error(d2.erro || 'não foi possível registrar');
+            }
 
             // Sucesso
             document.getElementById('formContainer').style.display = 'none';
