@@ -1491,7 +1491,13 @@
         if (!data.sucesso) { loading.classList.remove('active'); return; }
 
         if (data.statusValidos?.length) statusValidos = data.statusValidos;
-        leadsData = data.leads || [];
+        // Normaliza campos de texto: a planilha devolve números (ex.: telefone no lugar do nome em leads do WhatsApp)
+        leadsData = (data.leads || []).map(l => {
+          ['nome', 'telefone', 'empresa', 'email', 'notas', 'status', 'origem', 'interesse'].forEach(c => {
+            if (l[c] !== null && l[c] !== undefined && typeof l[c] !== 'string') l[c] = String(l[c]);
+          });
+          return l;
+        });
         dashboardFinanceiro = data.financeiro || {};
 
         preencherSelectsStatus();
