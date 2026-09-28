@@ -308,7 +308,7 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <a href="https://lin-cmk.github.io/gdj-crm/apresentacao/" target="_blank" class="btn-gold !py-1.5 !px-3 text-xs hidden md:inline-flex" title="Abrir Apresentação">
+          <a href="https://crm.gdjvertex.com.br/apresentacao/" target="_blank" class="btn-gold !py-1.5 !px-3 text-xs hidden md:inline-flex" title="Abrir Apresentação">
             <i class="fas fa-presentation"></i> Apresentação
           </a>
           <span class="text-xs text-slate-400 hidden lg:block" id="ultimaAtualizacao">--</span>
@@ -988,9 +988,10 @@
         </div>
 
         <div class="space-y-3">
-          <select id="postagemVagaId" class="input-field">
+          <select id="postagemVagaId" class="input-field" onchange="atualizarLinkPostagem()">
             <option value="">Vincular a uma vaga existente (opcional)</option>
           </select>
+          <div id="postagemLinkBox" class="text-xs"></div>
           <div class="grid grid-cols-2 gap-3">
             <input type="text" id="postagemTitulo" class="input-field" placeholder="Título da vaga *" />
             <input type="text" id="postagemEmpresa" class="input-field" placeholder="Empresa" />
@@ -1185,6 +1186,23 @@
       <div class="flex gap-3">
         <button onclick="salvarStatusVaga()" id="btnSalvarStatusVaga" class="btn-primary flex-1">Salvar</button>
         <button onclick="excluirVaga()" class="btn-outline flex-1 text-red-500 border-red-200">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: LINK DA VAGA ================= -->
+  <div id="modalLinkVaga" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 font-serif"><i class="fas fa-link text-amber-500 mr-2"></i>Link do formulário</h3>
+        <button onclick="fecharModal('modalLinkVaga')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <p class="text-sm text-slate-500 mb-2">Vaga: <strong id="linkVagaTitulo">--</strong></p>
+      <p class="text-xs text-slate-400 mb-2">Poste este link junto com o criativo. Quem se candidatar por ele fica vinculado a esta vaga.</p>
+      <input id="linkVagaUrl" class="input-field mb-3 text-xs" readonly onclick="this.select()" />
+      <div class="flex gap-3">
+        <button onclick="copiarTexto(document.getElementById('linkVagaUrl').value)" class="btn-primary flex-1"><i class="fas fa-copy mr-1"></i>Copiar link</button>
+        <a id="linkVagaAbrir" href="#" target="_blank" class="btn-outline flex-1 text-center"><i class="fas fa-external-link-alt mr-1"></i>Abrir</a>
       </div>
     </div>
   </div>
@@ -1975,8 +1993,49 @@
     // ============================================================
     // VAGAS
     // ============================================================
+    let contagemCandidatosPorVaga = {};
+    const URL_FORM_VAGA = 'https://vagas.gdjvertex.com.br/candidatar/?vaga=';
+    function linkFormularioVaga(id) { return URL_FORM_VAGA + encodeURIComponent(id); }
+
+    async function carregarContagemCandidatos() {
+      try {
+        const resp = await fetch(CONFIG.API_URL + '?action=listar_candidatos');
+        const data = await resp.json();
+        const lista = data.sucesso ? (data.candidatos || []) : [];
+        contagemCandidatosPorVaga = {};
+        lista.forEach(c => {
+          const vid = c.vagaId || c.vaga_id || c.id_vaga;
+          if (vid) contagemCandidatosPorVaga[vid] = (contagemCandidatosPorVaga[vid] || 0) + 1;
+        });
+      } catch (e) { console.error(e); }
+    }
+
+    function verCandidatosDaVaga(id) {
+      mudarAba('candidatos');
+      const sel = document.getElementById('filtroVagaCandidatos');
+      if (sel) { sel.value = id; carregarCandidatos(); }
+    }
+
+    function abrirLinkVaga(id) {
+      const vaga = (vagasData || []).find(v => v.id === id);
+      document.getElementById('linkVagaTitulo').textContent = vaga ? vaga.titulo : '';
+      document.getElementById('linkVagaUrl').value = linkFormularioVaga(id);
+      document.getElementById('linkVagaAbrir').href = linkFormularioVaga(id);
+      toggleModal('modalLinkVaga', true);
+    }
+
+    async function copiarTexto(texto) {
+      try { await navigator.clipboard.writeText(texto); }
+      catch (e) {
+        const t = document.createElement('textarea'); t.value = texto; document.body.appendChild(t);
+        t.select(); document.execCommand('copy'); t.remove();
+      }
+      mostrarToast('🔗 Link copiado!', 'sucesso');
+    }
+
     async function carregarVagas() {
       try {
+        await carregarContagemCandidatos();
         const resp = await fetch(CONFIG.API_URL + '?action=listar_vagas');
         const data = await resp.json();
         vagasData = data.sucesso ? (data.vagas || []) : [];
@@ -2011,6 +2070,10 @@
                 ${v.consultor_reservando
                   ? `<span class="text-[0.65rem] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full"><i class="fas fa-user-lock mr-0.5"></i>${escapeHtml(v.consultor_reservando)}</span>`
                   : `<button onclick="event.stopPropagation(); reservarVaga('${v.id}')" class="text-[0.65rem] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full font-semibold"><i class="fas fa-hand-paper mr-0.5"></i>Reservar pra mim</button>`}
+              </div>
+              <div class="flex items-center justify-between gap-1 mt-1.5">
+                <button onclick="event.stopPropagation(); verCandidatosDaVaga('${v.id}')" class="text-[0.65rem] bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold" title="Ver candidatos desta vaga">👥 ${contagemCandidatosPorVaga[v.id] || 0} candidato(s)</button>
+                <button onclick="event.stopPropagation(); abrirLinkVaga('${v.id}')" class="text-[0.65rem] bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold" title="Link do formulário para postar">🔗 Link</button>
               </div>
             </div>`;
             }).join('')}
@@ -2077,7 +2140,9 @@
           ['vagaTitulo','vagaEmpresa','vagaResponsavel','vagaDescricao','vagaPrazoEsperado'].forEach(id => document.getElementById(id).value = '');
           document.getElementById('vagaQtdVagas').value = 1;
           document.getElementById('vagaGarantiaMeses').value = 3;
-          carregarVagas();
+          await carregarVagas();
+          const novoId = data.id || (data.vaga && data.vaga.id) || ((vagasData || []).filter(v => v.titulo === titulo).slice(-1)[0] || {}).id;
+          if (novoId) abrirLinkVaga(novoId);
         }
       } catch (e) { mostrarToast('Erro: ' + e.message, 'erro'); }
       btn.disabled = false; btn.textContent = 'Salvar';
@@ -2153,6 +2218,7 @@
         const resp = await fetch(CONFIG.API_URL + '?action=listar_candidatos' + (vagaId ? '&vagaId=' + encodeURIComponent(vagaId) : ''));
         const data = await resp.json();
         candidatosData = data.sucesso ? (data.candidatos || []) : [];
+        if (vagaId) candidatosData = candidatosData.filter(c => (c.vagaId || c.vaga_id || c.id_vaga) === vagaId);
         document.getElementById('totalCandidatos').textContent = candidatosData.length + ' candidatos';
         renderKanbanCandidatos();
       } catch (e) { console.error(e); }
@@ -3168,8 +3234,18 @@ function copiarLinkMeet(link) {
 
       const opcoesVaga = (vagasData || []).map(v => `<option value="${v.id}">${escapeHtml(v.titulo)} — ${escapeHtml(v.empresa)}</option>`).join('');
       document.getElementById('postagemVagaId').innerHTML = '<option value="">Vincular a uma vaga existente (opcional)</option>' + opcoesVaga;
+      atualizarLinkPostagem();
 
       toggleModal('modalNovaPostagem', true);
+    }
+
+    function atualizarLinkPostagem() {
+      const id = document.getElementById('postagemVagaId').value;
+      const box = document.getElementById('postagemLinkBox');
+      if (!box) return;
+      if (!id) { box.innerHTML = '<div class="bg-amber-50 text-amber-700 rounded-lg px-3 py-2"><i class="fas fa-exclamation-triangle mr-1"></i>Sem vaga vinculada: os candidatos desta postagem não ficarão ligados a nenhuma vaga.</div>'; return; }
+      const url = linkFormularioVaga(id);
+      box.innerHTML = `<div class="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2"><span class="truncate flex-1 text-slate-600">${escapeHtml(url)}</span><button type="button" onclick="copiarTexto('${url}')" class="text-amber-700 font-semibold whitespace-nowrap"><i class="fas fa-copy mr-1"></i>Copiar</button></div>`;
     }
 
     document.getElementById('postagemCriativos').addEventListener('change', async (e) => {
@@ -3266,8 +3342,8 @@ function copiarLinkMeet(link) {
             grupos_facebook: [],
             instagram_user_id: postagem.instagram_user_id || '',
             linkedin_org_id: postagem.linkedin_org_id || '',
-            url_candidatura: 'https://lin-cmk.github.io/gdj-crm/candidatar/?vaga=' + postagem.vaga_id,
-            url_painel: 'https://lin-cmk.github.io/gdj-crm/',
+            url_candidatura: postagem.vaga_id ? linkFormularioVaga(postagem.vaga_id) : null,
+            url_painel: 'https://crm.gdjvertex.com.br/',
           }),
         });
         const data = await resp.json();
