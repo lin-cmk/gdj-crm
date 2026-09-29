@@ -2375,6 +2375,20 @@
         if (!data.sucesso) mostrarToast('Erro: ' + data.erro, 'erro');
         else {
           mostrarToast('✅ Candidato atualizado!', 'sucesso');
+          // Aviso de entrevista por WhatsApp (n8n GDJ - AGENDAMENTO): só quando a entrevista é agendada ou remarcada
+          try {
+            const candAnt = candidatosData.find(x => x.id === candidatoIdEmEdicao) || {};
+            const dataAnt = (candAnt.data_entrevista || '').slice(0, 16);
+            if (etapa === 'entrevista_agendada' && data_entrevista && (candAnt.etapa !== 'entrevista_agendada' || dataAnt !== data_entrevista.slice(0, 16))) {
+              fetch('https://n8noficial.salesguardian.com.br/webhook/agendamento', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ candidato_id: candidatoIdEmEdicao, data_entrevista, entrevistador })
+              })
+                .then(r => r.json())
+                .then(r => mostrarToast(r.sucesso ? (r.whatsapp_candidato ? '📲 WhatsApp da entrevista enviado ao candidato' : 'Entrevista registrada (candidato sem WhatsApp válido)') : 'Entrevista salva, mas o aviso por WhatsApp falhou', r.sucesso ? 'sucesso' : 'aviso'))
+                .catch(() => mostrarToast('Entrevista salva, mas o aviso por WhatsApp falhou', 'aviso'));
+            }
+          } catch (e) { console.warn('Aviso de agendamento não enviado', e); }
           fecharModal('modalEtapaCandidato');
           carregarCandidatos();
           if (etapa === 'contratado') {
